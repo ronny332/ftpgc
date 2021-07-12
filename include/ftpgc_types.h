@@ -1,0 +1,11 @@
+#ifndef __FTPGC__TYPES_
+#define __FTPGC__TYPES_
+
+#define FTPGC_NONETWORK -1
+#define FTPGC_NOSOCKET -2
+#define FTPGC_NOSOCKETBIND -3
+#define FTPGC_NOCONTROL -4
+#define FTPGC_SOCKETERROR -5
+#define FTPGC_SUCCESS 1
+
+#endif
