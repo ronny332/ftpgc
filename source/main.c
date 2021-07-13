@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <unistd.h>
+
 #include <ogcsys.h>
 #include <gccore.h>
 #include <network.h>
@@ -14,7 +16,7 @@ int main(int argc, char **argv)
 {
     xfb = initialise();
 
-    printf("%d\n", ftpgc_init());
+    ftpgc_init();
 
     return 0;
 }

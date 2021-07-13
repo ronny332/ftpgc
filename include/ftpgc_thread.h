@@ -3,10 +3,7 @@
 
 #include <gccore.h>
 
-typedef void *(*ftpgc_thread_callback)(void *arg);
-
-static lwpq_t ftpgc_thread_control = (lwp_t)NULL;
-static lwpq_t ftpgc_thread_data = (lwp_t)NULL;
+typedef void *(*ftpgc_thread_callback)(void *ret);
 
 enum ftpgc_thread_type
 {
@@ -14,6 +11,7 @@ enum ftpgc_thread_type
     Data
 };
 
-s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb);
+s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb, void *ret);
+s32 ftpgc_thread_join(enum ftpgc_thread_type type);
 
 #endif
