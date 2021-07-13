@@ -14,7 +14,7 @@ s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb, v
     case Control:
         if (!t_control)
         {
-            return (LWP_CreateThread(&t_control, cb, ret, NULL, 16 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_CONTROLTHREADERROR;
+            return (LWP_CreateThread(&t_control, cb, ret, NULL, 17 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_CONTROLTHREADERROR;
         }
         else
         {
@@ -45,6 +45,7 @@ s32 ftpgc_thread_join(enum ftpgc_thread_type type)
         if (t_control)
         {
             LWP_JoinThread(t_control, (void **)&ret_ptr);
+            t_control = 0;
             return ret;
         }
         else
@@ -55,6 +56,7 @@ s32 ftpgc_thread_join(enum ftpgc_thread_type type)
         if (t_data)
         {
             LWP_JoinThread(t_data, (void **)&ret_ptr);
+            t_data = 0;
             return ret;
         }
         else
