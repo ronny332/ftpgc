@@ -4,6 +4,7 @@
 
 #include "bba.h"
 #include "ftpgc.h"
+#include "ftpgc_control.h"
 
 s32 csock, sock;
 u32 client_len;
@@ -12,6 +13,8 @@ s32 ret;
 
 s32 ftpgc_init(void)
 {
+    ftpgc_create_control_server();
+
     init_network();
 
     if (bba_exists == 0 || net_initialized == 0)

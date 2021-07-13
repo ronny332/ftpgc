@@ -1,4 +1,4 @@
-#ifndef ___FTPGC_HELPER_H
-#define ___FTPGC_HELPER_H
+#ifndef ___FTPGC_HELPER_H_
+#define ___FTPGC_HELPER_H_
 
 #endif
