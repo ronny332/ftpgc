@@ -62,7 +62,7 @@ void *_ftpgc_control_handle(void *ret_void_ptr)
 
         if (sock == INVALID_SOCKET)
         {
-            *ret_s32_ptr = FTPGC_NOSOCKET;
+            *ret_s32_ptr = FTPGC_NO_SOCKET;
             return NULL;
         }
 
@@ -73,7 +73,7 @@ void *_ftpgc_control_handle(void *ret_void_ptr)
 
         if (ret)
         {
-            *ret_s32_ptr = FTPGC_NOSOCKETBIND;
+            *ret_s32_ptr = FTPGC_NO_SOCKET_BIND;
             return NULL;
         }
     }
@@ -82,7 +82,7 @@ void *_ftpgc_control_handle(void *ret_void_ptr)
 
     if (ret)
     {
-        *ret_s32_ptr = FTPGC_SOCKETLISTENERROR;
+        *ret_s32_ptr = FTPGC_SOCKET_LISTEN_ERROR;
         return NULL;
     }
 
@@ -90,7 +90,7 @@ void *_ftpgc_control_handle(void *ret_void_ptr)
 
     if (csock < 0)
     {
-        *ret_s32_ptr = FTPGC_SOCKETERROR;
+        *ret_s32_ptr = FTPGC_SOCKET_ERROR;
         return NULL;
     }
 
@@ -105,13 +105,13 @@ void *_ftpgc_control_handle(void *ret_void_ptr)
 
         if (!ret)
         {
-            *ret_s32_ptr = FTPGC_CONTROLSENDERROR;
+            *ret_s32_ptr = FTPGC_CTRL_THREAD_SEND_ERROR;
             return NULL;
         }
 
         if (ret <= 0)
         {
-            *ret_s32_ptr = FTPGC_NOINPUT;
+            *ret_s32_ptr = FTPGC_NO_INPUT;
             return NULL;
         }
 
@@ -119,7 +119,7 @@ void *_ftpgc_control_handle(void *ret_void_ptr)
 
         if (!ret)
         {
-            *ret_s32_ptr = FTPGC_CONTROLSENDERROR;
+            *ret_s32_ptr = FTPGC_CTRL_THREAD_SEND_ERROR;
             return NULL;
         }
 

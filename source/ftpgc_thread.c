@@ -14,20 +14,20 @@ s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb, v
     case Control:
         if (!t_control)
         {
-            return (LWP_CreateThread(&t_control, cb, ret_void_ptr, NULL, 17 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_CONTROLTHREADERROR;
+            return (LWP_CreateThread(&t_control, cb, ret_void_ptr, NULL, 17 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_CTRL_THREAD_ERROR;
         }
         else
         {
-            return FTPGC_CONTROLALREADYCREATED;
+            return FTPGC_CTRL_THREAD_ALREADY_CREATED;
         }
     case Data:
         if (!t_data)
         {
-            return (LWP_CreateThread(&t_data, cb, ret_void_ptr, NULL, 16 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_DATATHREADERROR;
+            return (LWP_CreateThread(&t_data, cb, ret_void_ptr, NULL, 16 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_DATA_THREAD_ERROR;
         }
         else
         {
-            return FTPGC_DATAALREADYCREATED;
+            return FTPGC_DATA_THREAD_ALREADY_CREATED;
         }
         return 0;
     }
@@ -50,7 +50,7 @@ s32 ftpgc_thread_join(enum ftpgc_thread_type type)
         }
         else
         {
-            return FTPGC_CONTROLNOTRUNNING;
+            return FTPGC_CTRL_THREAD_NOT_RUNNING;
         }
     case Data:
         if (t_data)
@@ -61,9 +61,9 @@ s32 ftpgc_thread_join(enum ftpgc_thread_type type)
         }
         else
         {
-            return FTPGC_DATANOTRUNNING;
+            return FTPGC_DATA_THREAD_NOT_RUNNING;
         }
     }
 
-    return FTPGC_THREADERROR;
+    return FTPGC_THREAD_ERROR;
 }

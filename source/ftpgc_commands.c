@@ -12,7 +12,7 @@ s32 ftpgc_parse_cmd(const char *cmd, char **ret)
 
     if (strlen(cmd) <= 4)
     {
-        return FTPGC_INVALIDCOMMAND;
+        return FTPGC_INVALID_COMMAND;
     }
 
     memcpy(&cmd_tmp, cmd, 4);
