@@ -14,8 +14,13 @@ s32 ftpgc_init(void)
         return FTPGC_NONETWORK;
 
     printf("ip: %s\n", bba_ip);
-    ftpgc_create_control_server();
-    ftpgc_join_control_server();
+    // while (true)i
+    for (int i = 0; i < 3; i++)
+    {
+        printf("new control server...\n");
+        printf("%d\n", ftpgc_create_control_server());
+        ftpgc_join_control_server();
+    }
 
     return FTPGC_SUCCESS;
 }

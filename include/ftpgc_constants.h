@@ -3,6 +3,7 @@
 
 #define FTPCG_PORT_CONTROL 21
 #define FTPGC_PORT_DATA 20
+#define FTPGC_CONTROL_REQ_LEN 1024
 
 #endif
  
