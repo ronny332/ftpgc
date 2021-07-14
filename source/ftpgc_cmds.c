@@ -1,8 +1,8 @@
 #include <string.h>
-#include <gctypes.h>
 
-#include "ftpgc_constants.h"
-#include "ftpgc_returntypes.h"
+#include "ftpgc_cmds.h"
+
+#include "ftpgc_const.h"
 
 char cmd_tmp[5];
 

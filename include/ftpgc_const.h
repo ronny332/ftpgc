@@ -1,5 +1,9 @@
-#ifndef __FTPGC__RETURNTYPES_
-#define __FTPGC__RETURNTYPES_
+#ifndef __FTPGC_CONST_
+#define __FTPGC_CONST_
+
+#define FTPCG_PORT_CONTROL 21
+#define FTPGC_PORT_DATA 20
+#define FTPGC_CONTROL_REQ_LEN 1024
 
 #define FTPGC_NO_NETWORK -1
 #define FTPGC_NO_SOCKET -2
@@ -21,3 +25,4 @@
 #define FTPGC_SUCCESS 1
 
 #endif
+ 

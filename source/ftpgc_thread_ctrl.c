@@ -4,10 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ftpgc_commands.h"
-#include "ftpgc_constants.h"
+#include "ftpgc_cmds.h"
+#include "ftpgc_const.h"
 #include "ftpgc_thread_ctrl.h"
-#include "ftpgc_returntypes.h"
 #include "ftpgc_thread.h"
 
 const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";

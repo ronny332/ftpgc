@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 #include "ftpgc_thread.h"
-#include "ftpgc_returntypes.h"
+#include "ftpgc_const.h"
 
 lwpq_t t_control = 0;
 lwpq_t t_data = 0;
