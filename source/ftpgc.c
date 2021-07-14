@@ -4,7 +4,7 @@
 
 #include "bba.h"
 #include "ftpgc.h"
-#include "ftpgc_control.h"
+#include "ftpgc_thread_ctrl.h"
 
 s32 ftpgc_init(void)
 {
@@ -18,8 +18,8 @@ s32 ftpgc_init(void)
     for (int i = 0; i < 3; i++)
     {
         printf("new control server...\n");
-        printf("%d\n", ftpgc_create_control_server());
-        ftpgc_join_control_server();
+        printf("%d\n", ftpgc_create_ctrl_server());
+        ftpgc_join_ctrl_server();
     }
 
     return FTPGC_SUCCESS;

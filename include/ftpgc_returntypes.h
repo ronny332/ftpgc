@@ -1,5 +1,5 @@
-#ifndef __FTPGC__TYPES_
-#define __FTPGC__TYPES_
+#ifndef __FTPGC__RETURNTYPES_
+#define __FTPGC__RETURNTYPES_
 
 #define FTPGC_NO_NETWORK -1
 #define FTPGC_NO_SOCKET -2

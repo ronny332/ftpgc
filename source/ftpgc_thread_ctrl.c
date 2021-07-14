@@ -6,8 +6,8 @@
 
 #include "ftpgc_commands.h"
 #include "ftpgc_constants.h"
-#include "ftpgc_control.h"
-#include "ftpgc_returns.h"
+#include "ftpgc_thread_ctrl.h"
+#include "ftpgc_returntypes.h"
 #include "ftpgc_thread.h"
 
 const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
@@ -21,14 +21,14 @@ char req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
 s32 ret = -1;
 int *ret_s32_ptr = (int *)NULL;
 
-s32 ftpgc_create_control_server()
+s32 ftpgc_create_ctrl_server()
 {
-    ret_thread = ftpgc_thread_create(Control, _ftpgc_control_handle, (void *)&ret_server);
+    ret_thread = ftpgc_thread_create(Control, _ftpgc_ctrl_handle, (void *)&ret_server);
 
     return (ret_server != FTPGC_SUCCESS) ? ret_server : ret_thread;
 }
 
-s32 ftpgc_join_control_server(void)
+s32 ftpgc_join_ctrl_server(void)
 {
     return ftpgc_thread_join(Control);
 }
@@ -47,7 +47,7 @@ void _ftpgc_close_socket(void)
     }
 }
 
-void *_ftpgc_control_handle(void *ret_void_ptr)
+void *_ftpgc_ctrl_handle(void *ret_void_ptr)
 {
     ret_s32_ptr = (s32 *)ret_void_ptr;
     _ftpgc_close_socket();

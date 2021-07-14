@@ -2,7 +2,7 @@
 #include <gctypes.h>
 
 #include "ftpgc_constants.h"
-#include "ftpgc_returns.h"
+#include "ftpgc_returntypes.h"
 
 char cmd_tmp[5];
 
