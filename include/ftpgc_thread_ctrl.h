@@ -7,10 +7,10 @@ s32 ftpgc_create_ctrl_server(void);
 
 s32 ftpgc_join_ctrl_server(void);
 
-void _ftpgc_clear_req_buffer(void);
+void _clear_req_buffer(void);
 
-void _ftpgc_close_socket(void);
+void _close_socket(void);
 
-void *_ftpgc_ctrl_handle(void *arg);
+void *_ctrl_handle(void *arg);
 
 #endif

@@ -23,7 +23,7 @@ int *ret_s32_ptr = (int *)NULL;
 
 s32 ftpgc_create_ctrl_server()
 {
-    ret_thread = ftpgc_thread_create(Control, _ftpgc_ctrl_handle, (void *)&ret_server);
+    ret_thread = ftpgc_thread_create(Control, _ctrl_handle, (void *)&ret_server);
 
     return (ret_server != FTPGC_SUCCESS) ? ret_server : ret_thread;
 }
@@ -33,12 +33,12 @@ s32 ftpgc_join_ctrl_server(void)
     return ftpgc_thread_join(Control);
 }
 
-void _ftpgc_clear_req_buffer(void)
+void _clear_req_buffer(void)
 {
     memset(&req_buffer, 0, FTPGC_CONTROL_REQ_LEN + 1);
 }
 
-void _ftpgc_close_socket(void)
+void _close_socket(void)
 {
     if (csock <= 0)
     {
@@ -47,10 +47,10 @@ void _ftpgc_close_socket(void)
     }
 }
 
-void *_ftpgc_ctrl_handle(void *ret_void_ptr)
+void *_ctrl_handle(void *ret_void_ptr)
 {
     ret_s32_ptr = (s32 *)ret_void_ptr;
-    _ftpgc_close_socket();
+    _close_socket();
 
     memset(&client, 0, sizeof(client));
     memset(&server, 0, sizeof(server));
@@ -69,14 +69,7 @@ void *_ftpgc_ctrl_handle(void *ret_void_ptr)
         server.sin_family = AF_INET;
         server.sin_port = htons(FTPCG_PORT_CONTROL);
         server.sin_addr.s_addr = INADDR_ANY;
-        ret = net_bind(sock, (struct sockaddr *)&server, sizeof(server));
-
-        if (ret)
-        {
-            *ret_s32_ptr = FTPGC_NO_SOCKET_BIND;
-            return NULL;
-        }
-    }
+    };
 
     ret = net_listen(sock, 5);
 
@@ -86,7 +79,9 @@ void *_ftpgc_ctrl_handle(void *ret_void_ptr)
         return NULL;
     }
 
+    printf("accept %d\n", FTPCG_PORT_CONTROL);
     csock = net_accept(sock, (struct sockaddr *)&client, &client_len);
+    printf("csock %d\n", csock);
 
     if (csock < 0)
     {
@@ -99,7 +94,7 @@ void *_ftpgc_ctrl_handle(void *ret_void_ptr)
 
     while (true)
     {
-        _ftpgc_clear_req_buffer();
+        _clear_req_buffer();
 
         ret = net_recv(csock, req_buffer, FTPGC_CONTROL_REQ_LEN, 0);
 
@@ -125,11 +120,12 @@ void *_ftpgc_ctrl_handle(void *ret_void_ptr)
 
         if (ftpgc_parse_cmd(req_buffer, &cmd) == FTPGC_VALID)
         {
-            printf("cmd: %s\n", cmd);
+            //printf("cmd: %s\n", cmd);
+            ftpgc_write_reply(csock, 200, "Command okay.");
         }
     }
 
-    _ftpgc_close_socket();
+    _close_socket();
 
     *ret_s32_ptr = FTPGC_SUCCESS;
     return NULL;

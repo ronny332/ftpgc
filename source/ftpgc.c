@@ -18,8 +18,8 @@ s32 ftpgc_init(void)
     for (int i = 0; i < 3; i++)
     {
         printf("new control server...\n");
-        printf("%d\n", ftpgc_create_ctrl_server());
-        ftpgc_join_ctrl_server();
+        printf("server start: %d\n", ftpgc_create_ctrl_server());
+        printf("server ended: %d\n", ftpgc_join_ctrl_server());
     }
 
     return FTPGC_SUCCESS;
