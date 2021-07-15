@@ -13,18 +13,17 @@ const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
 
 char *cmd;
 BOOL execution_end = FALSE;
-s32 ret_server = 0;
+s32 ret_handle = 0;
 s32 ret_thread = 0;
 s32 csock = -1, sock = -1;
 u32 client_len = -1;
 struct sockaddr_in client, server;
 char req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
 s32 ret = -1;
-int *ret_s32_ptr = (int *)NULL;
 
 s32 ftpgc_create_ctrl_server()
 {
-    ret_thread = ftpgc_thread_create(Control, _ctrl_handle, (void *)&ret_server);
+    ret_thread = ftpgc_thread_create(Control, _ctrl_handle);
 
     return ret_thread;
 }
@@ -32,7 +31,7 @@ s32 ftpgc_create_ctrl_server()
 s32 ftpgc_join_ctrl_server(void)
 {
     ret_thread = ftpgc_thread_join(Control);
-    return ret_server;
+    return ret_handle;
 }
 
 void _clear_req_buffer(void)
@@ -55,7 +54,6 @@ void _close_socket(BOOL shutdown)
 
 void *_ctrl_handle(void *ret_void_ptr)
 {
-    ret_s32_ptr = (s32 *)ret_void_ptr;
     _close_socket(TRUE);
 
     memset(&client, 0, sizeof(client));
@@ -68,7 +66,7 @@ void *_ctrl_handle(void *ret_void_ptr)
 
         if (sock == INVALID_SOCKET)
         {
-            *ret_s32_ptr = FTPGC_NO_SOCKET;
+            ret_handle = FTPGC_NO_SOCKET;
             return NULL;
         }
 
@@ -79,7 +77,7 @@ void *_ctrl_handle(void *ret_void_ptr)
 
         if (ret)
         {
-            *ret_s32_ptr = FTPGC_NO_SOCKET_BIND;
+            ret_handle = FTPGC_NO_SOCKET_BIND;
             return NULL;
         }
     };
@@ -88,7 +86,7 @@ void *_ctrl_handle(void *ret_void_ptr)
 
     if (ret)
     {
-        *ret_s32_ptr = FTPGC_SOCKET_LISTEN_ERROR;
+        ret_handle = FTPGC_SOCKET_LISTEN_ERROR;
         return NULL;
     }
 
@@ -96,7 +94,7 @@ void *_ctrl_handle(void *ret_void_ptr)
 
     if (csock < 0)
     {
-        *ret_s32_ptr = FTPGC_SOCKET_ERROR;
+        ret_handle = FTPGC_SOCKET_ERROR;
         return NULL;
     }
 
@@ -112,13 +110,13 @@ void *_ctrl_handle(void *ret_void_ptr)
 
         if (!ret)
         {
-            *ret_s32_ptr = FTPGC_CTRL_THREAD_RECV_ERROR;
+            ret_handle = FTPGC_CTRL_THREAD_RECV_ERROR;
             return NULL;
         }
 
         if (ret <= 0)
         {
-            *ret_s32_ptr = FTPGC_NO_INPUT;
+            ret_handle = FTPGC_NO_INPUT;
             return NULL;
         }
 
@@ -144,12 +142,12 @@ void *_ctrl_handle(void *ret_void_ptr)
         }
         if (!ret)
         {
-            *ret_s32_ptr = FTPGC_DATA_THREAD_SEND_ERROR;
+            ret_handle = FTPGC_DATA_THREAD_SEND_ERROR;
             return NULL;
         }
         if (execution_end)
         {
-            *ret_s32_ptr = FTPGC_EXECUTION_END;
+            ret_handle = FTPGC_EXECUTION_END;
             _close_socket(TRUE);
             return NULL;
         }
@@ -157,6 +155,6 @@ void *_ctrl_handle(void *ret_void_ptr)
 
     _close_socket(TRUE);
 
-    *ret_s32_ptr = FTPGC_SUCCESS;
+    ret_handle = FTPGC_SUCCESS;
     return NULL;
 }

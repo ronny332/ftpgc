@@ -11,7 +11,7 @@ enum ftpgc_thread_type
     Data
 };
 
-s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb, void *ret_void_ptr);
+s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb);
 s32 ftpgc_thread_join(enum ftpgc_thread_type type);
 
 #endif
