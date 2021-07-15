@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-// #include <network.h>
+#include <network.h>
 
 #include "ftpgc_cmds.h"
 
@@ -39,7 +39,7 @@ s32 ftpgc_write_reply(s32 csock, u32 code, const char *msg)
     _clear_reply_buffer();
     sprintf(reply_buffer, "%u %s\r\n", code, msg);
     
-    return 0; //net_send(csock, reply_buffer, strlen(reply_buffer), 0);
+    return net_send(csock, reply_buffer, strlen(reply_buffer), 0);
 }
 
 void _cmd_clean()

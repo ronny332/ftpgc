@@ -4,7 +4,7 @@
 #include <gctypes.h>
 
 static const char *ftpgc_commands_global[] = {
-    "USER", "PASS", "NOOP", "CWD", "QUIT"};
+    "USER", "PASS", "NOOP", "HELP", "CWD", "QUIT"};
 
 s32 ftpgc_parse_cmd(const char *cmd, char **ret);
 s32 ftpgc_write_reply(s32 csock, u32 code, const char *msg);

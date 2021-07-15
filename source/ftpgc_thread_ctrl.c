@@ -69,6 +69,13 @@ void *_ctrl_handle(void *ret_void_ptr)
         server.sin_family = AF_INET;
         server.sin_port = htons(FTPCG_PORT_CONTROL);
         server.sin_addr.s_addr = INADDR_ANY;
+        ret = net_bind(sock, (struct sockaddr *)&server, sizeof(server));
+
+        if (ret)
+        {
+            *ret_s32_ptr = FTPGC_NO_SOCKET_BIND;
+            return NULL;
+        }
     };
 
     ret = net_listen(sock, 5);
@@ -79,9 +86,7 @@ void *_ctrl_handle(void *ret_void_ptr)
         return NULL;
     }
 
-    printf("accept %d\n", FTPCG_PORT_CONTROL);
     csock = net_accept(sock, (struct sockaddr *)&client, &client_len);
-    printf("csock %d\n", csock);
 
     if (csock < 0)
     {
@@ -100,7 +105,7 @@ void *_ctrl_handle(void *ret_void_ptr)
 
         if (!ret)
         {
-            *ret_s32_ptr = FTPGC_CTRL_THREAD_SEND_ERROR;
+            *ret_s32_ptr = FTPGC_CTRL_THREAD_RECV_ERROR;
             return NULL;
         }
 
@@ -110,18 +115,25 @@ void *_ctrl_handle(void *ret_void_ptr)
             return NULL;
         }
 
-        ret = net_send(csock, "111 OK\r\n", 8, 0);
-
-        if (!ret)
-        {
-            *ret_s32_ptr = FTPGC_CTRL_THREAD_SEND_ERROR;
-            return NULL;
-        }
-
         if (ftpgc_parse_cmd(req_buffer, &cmd) == FTPGC_VALID)
         {
-            //printf("cmd: %s\n", cmd);
-            ftpgc_write_reply(csock, 200, "Command okay.");
+            if (strncmp(cmd, "NOOP", 4) == 0)
+            {
+                ret = ftpgc_write_reply(csock, 200, "Command okay.");
+            }
+            else
+            {
+                ret = ftpgc_write_reply(csock, 500, "Command not understood.");
+            }
+        }
+        else
+        {
+            ret = ftpgc_write_reply(csock, 502, "Command not understood.");
+        }
+        if (!ret)
+        {
+            *ret_s32_ptr = FTPGC_DATA_THREAD_SEND_ERROR;
+            return NULL;
         }
     }
 
