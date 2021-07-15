@@ -11,6 +11,7 @@
 
 const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
 
+char *cmd;
 s32 ret_server = 0;
 s32 ret_thread = 0;
 s32 csock = -1, sock = -1;
@@ -122,8 +123,7 @@ void *_ftpgc_ctrl_handle(void *ret_void_ptr)
             return NULL;
         }
 
-        char *cmd;
-        if (ftpgc_parse_cmd(req_buffer, &cmd))
+        if (ftpgc_parse_cmd(req_buffer, &cmd) == FTPGC_VALID)
         {
             printf("cmd: %s\n", cmd);
         }
