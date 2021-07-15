@@ -11,44 +11,44 @@
 
 const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
 
-char *cmd;
-BOOL execution_end = FALSE;
-s32 ret_handle = 0;
-s32 ret_thread = 0;
-s32 csock = -1, sock = -1;
-u32 client_len = -1;
-struct sockaddr_in client, server;
-char req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
-s32 ret = -1;
+u32 ctrl_client_len = -1;
+struct sockaddr_in ctrl_client, ctrl_server;
+char *ctrl_cmd;
+s32 ctrl_csock = -1, ctrl_sock = -1;
+BOOL ctrl_execution_end = FALSE;
+char ctrl_req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
+s32 ctrl_ret = -1;
+s32 ctrl_ret_handle = 0;
+s32 ctrl_ret_thread = 0;
 
 s32 ftpgc_create_ctrl_server()
 {
-    ret_thread = ftpgc_thread_create(Control, _ctrl_handle);
+    ctrl_ret_thread = ftpgc_thread_create(Control, _ctrl_handle);
 
-    return ret_thread;
+    return ctrl_ret_thread;
 }
 
 s32 ftpgc_join_ctrl_server(void)
 {
-    ret_thread = ftpgc_thread_join(Control);
-    return ret_handle;
+    ctrl_ret_thread = ftpgc_thread_join(Control);
+    return ctrl_ret_handle;
 }
 
 void _clear_req_buffer(void)
 {
-    memset(&req_buffer, 0, FTPGC_CONTROL_REQ_LEN + 1);
+    memset(&ctrl_req_buffer, 0, FTPGC_CONTROL_REQ_LEN + 1);
 }
 
 void _close_socket(BOOL shutdown)
 {
-    if (csock > 0)
+    if (ctrl_csock > 0)
     {
         if (shutdown)
         {
-            net_shutdown(csock, 2);
+            net_shutdown(ctrl_csock, 2);
         }
-        net_close(csock);
-        csock = -1;
+        net_close(ctrl_csock);
+        ctrl_csock = -1;
     }
 }
 
@@ -56,98 +56,86 @@ void *_ctrl_handle(void *ret_void_ptr)
 {
     _close_socket(TRUE);
 
-    memset(&client, 0, sizeof(client));
-    memset(&server, 0, sizeof(server));
-    client_len = sizeof(client);
+    memset(&ctrl_client, 0, sizeof(ctrl_client));
+    memset(&ctrl_server, 0, sizeof(ctrl_server));
+    ctrl_client_len = sizeof(ctrl_client);
 
-    if (sock < 0)
+    if (ctrl_sock < 0)
     {
-        sock = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+        ctrl_sock = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
-        if (sock == INVALID_SOCKET)
+        if (ctrl_sock == INVALID_SOCKET)
         {
-            ret_handle = FTPGC_NO_SOCKET;
+            ctrl_ret_handle = FTPGC_NO_SOCKET;
             return NULL;
         }
 
-        server.sin_family = AF_INET;
-        server.sin_port = htons(FTPCG_PORT_CONTROL);
-        server.sin_addr.s_addr = INADDR_ANY;
-        ret = net_bind(sock, (struct sockaddr *)&server, sizeof(server));
+        ctrl_server.sin_family = AF_INET;
+        ctrl_server.sin_port = htons(FTPCG_PORT_CONTROL);
+        ctrl_server.sin_addr.s_addr = INADDR_ANY;
+        ctrl_ret = net_bind(ctrl_sock, (struct sockaddr *)&ctrl_server, sizeof(ctrl_server));
 
-        if (ret)
+        if (ctrl_ret)
         {
-            ret_handle = FTPGC_NO_SOCKET_BIND;
+            ctrl_ret_handle = FTPGC_NO_SOCKET_BIND;
             return NULL;
         }
     };
 
-    ret = net_listen(sock, 5);
+    ctrl_ret = net_listen(ctrl_sock, 5);
 
-    if (ret)
+    if (ctrl_ret)
     {
-        ret_handle = FTPGC_SOCKET_LISTEN_ERROR;
+        ctrl_ret_handle = FTPGC_SOCKET_LISTEN_ERROR;
         return NULL;
     }
 
-    csock = net_accept(sock, (struct sockaddr *)&client, &client_len);
+    ctrl_csock = net_accept(ctrl_sock, (struct sockaddr *)&ctrl_client, &ctrl_client_len);
 
-    if (csock < 0)
+    if (ctrl_csock < 0)
     {
-        ret_handle = FTPGC_SOCKET_ERROR;
+        ctrl_ret_handle = FTPGC_SOCKET_ERROR;
         return NULL;
     }
 
-    printf("Connecting port %d from %s\n", client.sin_port, inet_ntoa(client.sin_addr));
-    ret = net_send(csock, ftpgc_welcome, strlen(ftpgc_welcome), 0);
+    printf("Connecting port %d from %s\n", ctrl_client.sin_port, inet_ntoa(ctrl_client.sin_addr));
+    ctrl_ret = net_send(ctrl_csock, ftpgc_welcome, strlen(ftpgc_welcome), 0);
 
     while (true)
     {
-        execution_end = FALSE;
+        ctrl_execution_end = FALSE;
         _clear_req_buffer();
 
-        ret = net_recv(csock, req_buffer, FTPGC_CONTROL_REQ_LEN, 0);
+        ctrl_ret = net_recv(ctrl_csock, ctrl_req_buffer, FTPGC_CONTROL_REQ_LEN, 0);
 
-        if (!ret)
+        if (!ctrl_ret)
         {
-            ret_handle = FTPGC_CTRL_THREAD_RECV_ERROR;
+            ctrl_ret_handle = FTPGC_CTRL_THREAD_RECV_ERROR;
             return NULL;
         }
 
-        if (ret <= 0)
+        if (ctrl_ret <= 0)
         {
-            ret_handle = FTPGC_NO_INPUT;
+            ctrl_ret_handle = FTPGC_NO_INPUT;
             return NULL;
         }
 
-        if (ftpgc_parse_cmd(req_buffer, &cmd) == FTPGC_VALID)
+        if (ftpgc_parse_single_cmd(ctrl_req_buffer, &ctrl_cmd) == FTPGC_VALID)
         {
-            if (strncmp(cmd, "NOOP", 4) == 0)
-            {
-                ret = ftpgc_write_reply(csock, 200, "Command okay.");
-            }
-            else if (strncmp(cmd, "QUIT", 4) == 0)
-            {
-                ret = ftpgc_write_reply(csock, 221, "Goodbye.");
-                execution_end = TRUE;
-            }
-            else
-            {
-                ret = ftpgc_write_reply(csock, 500, "Command not understood.");
-            }
+            ctrl_execution_end = ftpgc_handle_single_cmd(ctrl_csock, ctrl_cmd);
         }
         else
         {
-            ret = ftpgc_write_reply(csock, 502, "Command not implemented.");
+            ctrl_ret = ftpgc_write_reply(ctrl_csock, 502, "Command not implemented.");
         }
-        if (!ret)
+        if (!ctrl_ret)
         {
-            ret_handle = FTPGC_DATA_THREAD_SEND_ERROR;
+            ctrl_ret_handle = FTPGC_DATA_THREAD_SEND_ERROR;
             return NULL;
         }
-        if (execution_end)
+        if (ctrl_execution_end)
         {
-            ret_handle = FTPGC_EXECUTION_END;
+            ctrl_ret_handle = FTPGC_EXECUTION_END;
             _close_socket(TRUE);
             return NULL;
         }
@@ -155,6 +143,6 @@ void *_ctrl_handle(void *ret_void_ptr)
 
     _close_socket(TRUE);
 
-    ret_handle = FTPGC_SUCCESS;
+    ctrl_ret_handle = FTPGC_SUCCESS;
     return NULL;
 }

@@ -9,17 +9,41 @@
 
 static char cmd_tmp[5];
 
-u32 i = 0;
-s32 len = 0;
-char *pos = NULL;
-char reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
+u32 cmd_i = 0;
+s32 cmd_len = 0;
+char *cmd_pos = NULL;
+s32 cmd_ret = 0;
+char cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
 
-s32 ftpgc_parse_cmd(const char *cmd, char **ret)
+BOOL ftpgc_handle_single_cmd(s32 csock, const char *cmd)
+{
+    if (strncmp(cmd, "NOOP", 4) == 0)
+    {
+        cmd_ret = ftpgc_write_reply(csock, 200, "Command okay.");
+    }
+    else if (strncmp(cmd, "QUIT", 4) == 0)
+    {
+        ftpgc_write_reply(csock, 221, "Goodbye.");
+        return TRUE;
+    }
+    else if (strncmp(cmd, "SYST", 4) == 0)
+    {
+        cmd_ret = ftpgc_write_reply(csock, 215, "UNIX Type: L8");
+    }
+    else
+    {
+        cmd_ret = ftpgc_write_reply(csock, 500, "Command not understood.");
+    }
+
+    return (cmd_ret) ? FALSE : TRUE;
+}
+
+s32 ftpgc_parse_single_cmd(const char *cmd, char **ret)
 {
     _cmd_clean();
     _cmd_length(cmd);
 
-    if (len > 0)
+    if (cmd_len > 0)
     {
         _cmd_reformat(cmd);
         if (_cmd_valid())
@@ -37,9 +61,9 @@ s32 ftpgc_parse_cmd(const char *cmd, char **ret)
 s32 ftpgc_write_reply(s32 csock, u32 code, const char *msg)
 {
     _clear_reply_buffer();
-    sprintf(reply_buffer, "%u %s\r\n", code, msg);
-    
-    return net_send(csock, reply_buffer, strlen(reply_buffer), 0);
+    sprintf(cmd_reply_buffer, "%u %s\r\n", code, msg);
+
+    return net_send(csock, cmd_reply_buffer, strlen(cmd_reply_buffer), 0);
 }
 
 void _cmd_clean()
@@ -49,43 +73,43 @@ void _cmd_clean()
 
 void _cmd_length(const char *cmd)
 {
-    len = strlen(cmd);
+    cmd_len = strlen(cmd);
 
-    if (!len)
+    if (!cmd_len)
     {
-        len = -1;
+        cmd_len = -1;
         return;
     }
 
-    pos = strstr(cmd, "\r");
+    cmd_pos = strstr(cmd, "\r");
 
-    if (pos)
+    if (cmd_pos)
     {
-        len = pos - cmd;
+        cmd_len = cmd_pos - cmd;
     }
 
-    pos = strstr(cmd, " ");
+    cmd_pos = strstr(cmd, " ");
 
-    if (!pos && len < 3)
+    if (!cmd_pos && cmd_len < 3)
     {
-        len = -1;
+        cmd_len = -1;
         return;
     }
 }
 
 void _cmd_reformat(const char *cmd)
 {
-    for (i = 0; i < len; i++)
+    for (cmd_i = 0; cmd_i < cmd_len; cmd_i++)
     {
-        cmd_tmp[i] = toupper(cmd[i]);
+        cmd_tmp[cmd_i] = toupper(cmd[cmd_i]);
     }
 }
 
 BOOL _cmd_valid()
 {
-    for (i = 0; i < sizeof(ftpgc_commands_global) / sizeof(ftpgc_commands_global[0]); i++)
+    for (cmd_i = 0; cmd_i < sizeof(ftpgc_commands_global) / sizeof(ftpgc_commands_global[0]); cmd_i++)
     {
-        if (strncmp(ftpgc_commands_global[i], cmd_tmp, 4) == 0)
+        if (strncmp(ftpgc_commands_global[cmd_i], cmd_tmp, 4) == 0)
         {
             return TRUE;
         }
@@ -96,5 +120,5 @@ BOOL _cmd_valid()
 
 void _clear_reply_buffer(void)
 {
-    memset(&reply_buffer, 0, FTPGC_CONTROL_REPLY_LEN + 1);
+    memset(&cmd_reply_buffer, 0, FTPGC_CONTROL_REPLY_LEN + 1);
 }

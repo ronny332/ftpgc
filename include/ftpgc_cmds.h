@@ -3,10 +3,10 @@
 
 #include <gctypes.h>
 
-static const char *ftpgc_commands_global[] = {
-    "USER", "PASS", "NOOP", "HELP", "CWD", "QUIT"};
+static const char *ftpgc_commands_global[] = {"NOOP", "SYST", "QUIT"};
 
-s32 ftpgc_parse_cmd(const char *cmd, char **ret);
+BOOL ftpgc_handle_single_cmd(s32 csock, const char *cmd);
+s32 ftpgc_parse_single_cmd(const char *cmd, char **ret);
 s32 ftpgc_write_reply(s32 csock, u32 code, const char *msg);
 
 void _cmd_clean();
