@@ -9,7 +9,7 @@ s32 ftpgc_join_ctrl_server(void);
 
 void _clear_req_buffer(void);
 
-void _close_socket(void);
+void _close_socket(BOOL shutdown);
 
 void *_ctrl_handle(void *arg);
 

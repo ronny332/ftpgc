@@ -28,6 +28,7 @@
 
 #define FTPGC_SUCCESS 1
 #define FTPGC_VALID 1
+#define FTPGC_EXECUTION_END 2
 
 #endif
  

@@ -12,6 +12,7 @@
 const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
 
 char *cmd;
+BOOL execution_end = FALSE;
 s32 ret_server = 0;
 s32 ret_thread = 0;
 s32 csock = -1, sock = -1;
@@ -25,12 +26,13 @@ s32 ftpgc_create_ctrl_server()
 {
     ret_thread = ftpgc_thread_create(Control, _ctrl_handle, (void *)&ret_server);
 
-    return (ret_server != FTPGC_SUCCESS) ? ret_server : ret_thread;
+    return ret_thread;
 }
 
 s32 ftpgc_join_ctrl_server(void)
 {
-    return ftpgc_thread_join(Control);
+    ret_thread = ftpgc_thread_join(Control);
+    return ret_server;
 }
 
 void _clear_req_buffer(void)
@@ -38,10 +40,14 @@ void _clear_req_buffer(void)
     memset(&req_buffer, 0, FTPGC_CONTROL_REQ_LEN + 1);
 }
 
-void _close_socket(void)
+void _close_socket(BOOL shutdown)
 {
-    if (csock <= 0)
+    if (csock > 0)
     {
+        if (shutdown)
+        {
+            net_shutdown(csock, 2);
+        }
         net_close(csock);
         csock = -1;
     }
@@ -50,7 +56,7 @@ void _close_socket(void)
 void *_ctrl_handle(void *ret_void_ptr)
 {
     ret_s32_ptr = (s32 *)ret_void_ptr;
-    _close_socket();
+    _close_socket(TRUE);
 
     memset(&client, 0, sizeof(client));
     memset(&server, 0, sizeof(server));
@@ -99,6 +105,7 @@ void *_ctrl_handle(void *ret_void_ptr)
 
     while (true)
     {
+        execution_end = FALSE;
         _clear_req_buffer();
 
         ret = net_recv(csock, req_buffer, FTPGC_CONTROL_REQ_LEN, 0);
@@ -121,6 +128,11 @@ void *_ctrl_handle(void *ret_void_ptr)
             {
                 ret = ftpgc_write_reply(csock, 200, "Command okay.");
             }
+            else if (strncmp(cmd, "QUIT", 4) == 0)
+            {
+                ret = ftpgc_write_reply(csock, 221, "Goodbye.");
+                execution_end = TRUE;
+            }
             else
             {
                 ret = ftpgc_write_reply(csock, 500, "Command not understood.");
@@ -128,16 +140,22 @@ void *_ctrl_handle(void *ret_void_ptr)
         }
         else
         {
-            ret = ftpgc_write_reply(csock, 502, "Command not understood.");
+            ret = ftpgc_write_reply(csock, 502, "Command not implemented.");
         }
         if (!ret)
         {
             *ret_s32_ptr = FTPGC_DATA_THREAD_SEND_ERROR;
             return NULL;
         }
+        if (execution_end)
+        {
+            *ret_s32_ptr = FTPGC_EXECUTION_END;
+            _close_socket(TRUE);
+            return NULL;
+        }
     }
 
-    _close_socket();
+    _close_socket(TRUE);
 
     *ret_s32_ptr = FTPGC_SUCCESS;
     return NULL;

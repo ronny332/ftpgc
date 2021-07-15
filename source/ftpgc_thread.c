@@ -37,7 +37,7 @@ s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb, v
 
 s32 ftpgc_thread_join(enum ftpgc_thread_type type)
 {
-    s32 ret;
+    s32 ret = 999;
     s32 *ret_s32_ptr = &ret;
     switch (type)
     {
