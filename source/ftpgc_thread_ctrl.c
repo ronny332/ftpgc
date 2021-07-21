@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "ftpgc_auth.h"
 #include "ftpgc_cmds.h"
 #include "ftpgc_const.h"
 #include "ftpgc_thread_ctrl.h"
@@ -18,6 +19,7 @@ s32 ctrl_csock = -1, ctrl_sock = -1;
 BOOL ctrl_execution_end = FALSE;
 char ctrl_req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
 s32 ctrl_ret = -1;
+s32 ctrl_ret_cmd = -1;
 s32 ctrl_ret_handle = 0;
 s32 ctrl_ret_thread = 0;
 
@@ -120,9 +122,14 @@ void *_ctrl_handle(void *ret_void_ptr)
             return NULL;
         }
 
-        if (ftpgc_parse_single_cmd(ctrl_req_buffer, &ctrl_cmd) == FTPGC_VALID)
+        ctrl_ret_cmd = ftpgc_parse_cmd(ctrl_req_buffer, &ctrl_cmd);
+        if (ctrl_ret_cmd == FTPGC_CMD_SINGLE)
         {
             ctrl_execution_end = ftpgc_handle_single_cmd(ctrl_csock, ctrl_cmd);
+        }
+        else if (ctrl_ret_cmd == FTPGC_CMD_MULTI)
+        {
+            // TODO
         }
         else
         {
@@ -137,6 +144,7 @@ void *_ctrl_handle(void *ret_void_ptr)
         {
             ctrl_ret_handle = FTPGC_EXECUTION_END;
             _close_socket(TRUE);
+            ftpgc_authentificated = FALSE;
             return NULL;
         }
     }

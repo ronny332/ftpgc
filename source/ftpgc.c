@@ -14,7 +14,7 @@ s32 ftpgc_init(void)
         return FTPGC_NO_NETWORK;
 
     printf("ip: %s\n", bba_ip);
-    // while (true)i
+    // while (true)
     for (int i = 0; i < 3; i++)
     {
         printf("new control server...\n");
