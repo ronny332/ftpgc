@@ -1,9 +1,10 @@
+#include "ftpgc.h"
+
 #include <network.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "bba.h"
-#include "ftpgc.h"
 #include "ftpgc_thread_ctrl.h"
 
 s32 ftpgc_init(void)

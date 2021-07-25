@@ -12,13 +12,13 @@ enum ftpgc_cmd_type
 
 struct ftpgc_cmd_hist_item
 {
-    char cmd[5];
+    char  cmd[5];
     char *params;
 };
 
 BOOL ftpgc_handle_single_cmd(s32 csock, const char *cmd);
-s32 ftpgc_parse_cmd(const char *cmd, char **ret);
-s32 ftpgc_write_reply(s32 csock, u32 code, const char *msg);
+s32  ftpgc_parse_cmd(const char *cmd, char **ret);
+s32  ftpgc_write_reply(s32 csock, u32 code, const char *msg);
 
 void _append_cmd_hist_item(struct ftpgc_cmd_hist_item *item);
 void _clean_cmd_hist_item(struct ftpgc_cmd_hist_item *item);
@@ -29,7 +29,9 @@ void _cmd_copy(const char *cmd);
 void _cmd_length(const char *cmd);
 BOOL _cmd_needs_auth(const char *cmd);
 BOOL _cmd_valid(enum ftpgc_cmd_type type);
+
 struct ftpgc_cmd_hist_item *_create_cmd_hist_item(const char *cmd, const char *params);
+
 void _print_cmd_hist(void);
 
 #endif

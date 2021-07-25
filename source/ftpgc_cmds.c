@@ -14,11 +14,12 @@ static const char *ftpgc_cmds_need_auth[] = { "CWD" };
 
 struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
 
-static char         cmd_cur[6];
-s32                 cmd_len = 0;
-char *              cmd_pos = NULL;
-char                cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
-s32                 cmd_ret  = 0;
+static char cmd_cur[6];
+s32         cmd_len = 0;
+char *      cmd_pos = NULL;
+char        cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
+s32         cmd_ret = 0;
+
 enum ftpgc_cmd_type cmd_type = Invalid;
 
 BOOL ftpgc_handle_single_cmd(s32 csock, const char *cmd)
