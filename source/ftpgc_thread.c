@@ -1,11 +1,12 @@
+#include "ftpgc_thread.h"
+
 #include <stdio.h>
 #include <unistd.h>
 
-#include "ftpgc_thread.h"
 #include "ftpgc_const.h"
 
 lwpq_t thread_control = 0;
-lwpq_t thread_data = 0;
+lwpq_t thread_data    = 0;
 
 s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb)
 {
@@ -14,7 +15,8 @@ s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb)
     case Control:
         if (!thread_control)
         {
-            return (LWP_CreateThread(&thread_control, cb, NULL, NULL, 17 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_CTRL_THREAD_ERROR;
+            return (LWP_CreateThread(&thread_control, cb, NULL, NULL, 17 * 1024, 50) == 0) ? FTPGC_SUCCESS
+                                                                                           : FTPGC_CTRL_THREAD_ERROR;
         }
         else
         {
@@ -23,7 +25,8 @@ s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb)
     case Data:
         if (!thread_data)
         {
-            return (LWP_CreateThread(&thread_data, cb, NULL, NULL, 16 * 1024, 50) == 0) ? FTPGC_SUCCESS : FTPGC_DATA_THREAD_ERROR;
+            return (LWP_CreateThread(&thread_data, cb, NULL, NULL, 16 * 1024, 50) == 0) ? FTPGC_SUCCESS
+                                                                                        : FTPGC_DATA_THREAD_ERROR;
         }
         else
         {
@@ -37,7 +40,7 @@ s32 ftpgc_thread_create(enum ftpgc_thread_type type, ftpgc_thread_callback cb)
 
 s32 ftpgc_thread_join(enum ftpgc_thread_type type)
 {
-    s32 ret_thread = 0;
+    s32  ret_thread     = 0;
     s32 *ret_thread_ptr = &ret_thread;
     switch (type)
     {

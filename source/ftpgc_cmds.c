@@ -1,21 +1,21 @@
+#include "ftpgc_cmds.h"
+
 #include <ctype.h>
+#include <network.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <network.h>
-
-#include "ftpgc_cmds.h"
 
 #include "ftpgc_const.h"
 
-static char cmd_tmp[5];
+static char                 cmd_tmp[5];
 struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN];
 
-u32 cmd_i = 0;
-s32 cmd_len = 0;
+u32   cmd_i   = 0;
+s32   cmd_len = 0;
 char *cmd_pos = NULL;
-s32 cmd_ret = 0;
-char cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
+s32   cmd_ret = 0;
+char  cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
 
 BOOL ftpgc_handle_single_cmd(s32 csock, const char *cmd)
 {
@@ -44,10 +44,9 @@ BOOL ftpgc_handle_single_cmd(s32 csock, const char *cmd)
         cmd_ret = ftpgc_write_reply(csock, 530, "Please login with USER and PASS.");
     }
 
-    if (_append_cmd_hist_item(_create_cmd_hist_item(cmd, NULL)))
-    {
-        _print_cmd_hist();
-    }
+    _append_cmd_hist_item(_create_cmd_hist_item(cmd, NULL));
+
+    _print_cmd_hist();
 
     return (cmd_ret) ? FALSE : TRUE;
 }
@@ -85,17 +84,22 @@ s32 ftpgc_write_reply(s32 csock, u32 code, const char *msg)
     return net_send(csock, cmd_reply_buffer, strlen(cmd_reply_buffer), 0);
 }
 
-BOOL _append_cmd_hist_item(struct ftpgc_cmd_hist_item *item)
+void _append_cmd_hist_item(struct ftpgc_cmd_hist_item *item)
 {
     for (cmd_i = 0; cmd_i < FTPGC_CMD_HIST_LEN; cmd_i++)
     {
         if (ftpgc_cmd_hist[cmd_i] == NULL)
         {
             ftpgc_cmd_hist[cmd_i] = item;
-            return TRUE;
+            return;
         }
     }
-    return FALSE;
+
+    _clean_cmd_hist_item(ftpgc_cmd_hist[0]);
+
+    for (cmd_i = 1; cmd_i < FTPGC_CMD_HIST_LEN; cmd_i++) { ftpgc_cmd_hist[cmd_i] = ftpgc_cmd_hist[cmd_i - 1]; }
+
+    return;
 }
 
 void _clean_cmd_hist_item(struct ftpgc_cmd_hist_item *item)
@@ -170,10 +174,7 @@ BOOL _cmd_needs_auth(const char *cmd)
 
 void _cmd_reformat(const char *cmd)
 {
-    for (cmd_i = 0; cmd_i < cmd_len; cmd_i++)
-    {
-        cmd_tmp[cmd_i] = toupper(cmd[cmd_i]);
-    }
+    for (cmd_i = 0; cmd_i < cmd_len; cmd_i++) { cmd_tmp[cmd_i] = toupper(cmd[cmd_i]); }
 }
 
 BOOL _cmd_valid(enum ftpgc_cmd_type type)
@@ -206,7 +207,7 @@ struct ftpgc_cmd_hist_item *_create_cmd_hist_item(const char *cmd, const char *p
     if (len)
     {
         s32 len_params = (len < FTPGC_CONTROL_REQ_LEN - 4) ? len : FTPGC_CONTROL_REQ_LEN - 4;
-        item->params = calloc(len_params, sizeof(char));
+        item->params   = calloc(len_params, sizeof(char));
         strncpy(item->params, params, len_params);
     }
 
@@ -218,8 +219,11 @@ void _print_cmd_hist(void)
     for (cmd_i = 0; cmd_i < FTPGC_CMD_HIST_LEN; cmd_i++)
     {
         if (ftpgc_cmd_hist[cmd_i] != NULL)
+
         {
-            printf("cmd: %s, params: %s\n", ftpgc_cmd_hist[cmd_i]->cmd, (ftpgc_cmd_hist[cmd_i]->params != NULL) ? ftpgc_cmd_hist[cmd_i] : "");
+            printf("cmd: %s, params: %s\n",
+                   ftpgc_cmd_hist[cmd_i]->cmd,
+                   (ftpgc_cmd_hist[cmd_i]->params != NULL) ? ftpgc_cmd_hist[cmd_i] : "");
         }
     }
 }

@@ -1,27 +1,27 @@
-#include <stdio.h>
-#include <unistd.h>
+#include "ftpgc_thread_ctrl.h"
+
 #include <network.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "ftpgc_auth.h"
 #include "ftpgc_cmds.h"
 #include "ftpgc_const.h"
-#include "ftpgc_thread_ctrl.h"
 #include "ftpgc_thread.h"
 
 const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
 
-u32 ctrl_client_len = -1;
+u32                ctrl_client_len = -1;
 struct sockaddr_in ctrl_client, ctrl_server;
-char *ctrl_cmd;
-s32 ctrl_csock = -1, ctrl_sock = -1;
-BOOL ctrl_execution_end = FALSE;
-char ctrl_req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
-s32 ctrl_ret = -1;
-s32 ctrl_ret_cmd = -1;
-s32 ctrl_ret_handle = 0;
-s32 ctrl_ret_thread = 0;
+char *             ctrl_cmd;
+s32                ctrl_csock = -1, ctrl_sock = -1;
+BOOL               ctrl_execution_end = FALSE;
+char               ctrl_req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
+s32                ctrl_ret        = -1;
+s32                ctrl_ret_cmd    = -1;
+s32                ctrl_ret_handle = 0;
+s32                ctrl_ret_thread = 0;
 
 s32 ftpgc_create_ctrl_server()
 {
@@ -72,10 +72,10 @@ void *_ctrl_handle(void *ret_void_ptr)
             return NULL;
         }
 
-        ctrl_server.sin_family = AF_INET;
-        ctrl_server.sin_port = htons(FTPCG_PORT_CONTROL);
+        ctrl_server.sin_family      = AF_INET;
+        ctrl_server.sin_port        = htons(FTPCG_PORT_CONTROL);
         ctrl_server.sin_addr.s_addr = INADDR_ANY;
-        ctrl_ret = net_bind(ctrl_sock, (struct sockaddr *)&ctrl_server, sizeof(ctrl_server));
+        ctrl_ret                    = net_bind(ctrl_sock, (struct sockaddr *)&ctrl_server, sizeof(ctrl_server));
 
         if (ctrl_ret)
         {
