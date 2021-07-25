@@ -127,9 +127,10 @@ void *_ctrl_handle(void *ret_void_ptr)
         {
             ctrl_execution_end = ftpgc_handle_single_cmd(ctrl_csock, ctrl_cmd);
         }
-        else if (ctrl_ret_cmd == FTPGC_CMD_MULTI)
+        else if (ctrl_ret_cmd == FTPGC_CMD_PARAM)
         {
             // TODO
+            ctrl_ret = ftpgc_write_reply(ctrl_csock, 503, "Command not implemented yet.");
         }
         else
         {

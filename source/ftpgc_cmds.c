@@ -8,47 +8,62 @@
 
 #include "ftpgc_const.h"
 
-static char                 cmd_tmp[5];
-struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN];
+static const char *ftpgc_cmds_param[]     = { "USER", "PASS" };
+static const char *ftpgc_cmds_single[]    = { "NOOP", "SYST", "QUIT", "CWD" };
+static const char *ftpgc_cmds_need_auth[] = { "CWD" };
 
-u32   cmd_i   = 0;
-s32   cmd_len = 0;
-char *cmd_pos = NULL;
-s32   cmd_ret = 0;
-char  cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
+struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
+
+static char         cmd_cur[6];
+s32                 cmd_len = 0;
+char *              cmd_pos = NULL;
+char                cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
+s32                 cmd_ret  = 0;
+enum ftpgc_cmd_type cmd_type = Invalid;
 
 BOOL ftpgc_handle_single_cmd(s32 csock, const char *cmd)
 {
-    if (!_cmd_needs_auth(cmd))
+    if (cmd_type == Single)
     {
-        if (strncmp(cmd, "NOOP", 4) == 0)
+        if (!_cmd_needs_auth(cmd))
         {
-            cmd_ret = ftpgc_write_reply(csock, 200, "Command okay.");
-        }
-        else if (strncmp(cmd, "QUIT", 4) == 0)
-        {
-            ftpgc_write_reply(csock, 221, "Goodbye.");
-            return TRUE;
-        }
-        else if (strncmp(cmd, "SYST", 4) == 0)
-        {
-            cmd_ret = ftpgc_write_reply(csock, 215, "UNIX Type: L8.");
+            if (strncmp(cmd, "NOOP", 4) == 0)
+            {
+                cmd_ret = ftpgc_write_reply(csock, 200, "Command okay.");
+            }
+            else if (strncmp(cmd, "QUIT", 4) == 0)
+            {
+                ftpgc_write_reply(csock, 221, "Goodbye.");
+                return TRUE;
+            }
+            else if (strncmp(cmd, "SYST", 4) == 0)
+            {
+                cmd_ret = ftpgc_write_reply(csock, 215, "UNIX Type: L8.");
+            }
+            else
+            {
+                cmd_ret = ftpgc_write_reply(csock, 500, "Command not understood.");
+            }
         }
         else
         {
-            cmd_ret = ftpgc_write_reply(csock, 500, "Command not understood.");
+            ftpgc_write_reply(csock, 530, "Please login with USER and PASS.");
+            cmd_ret = -1;
         }
+
+        if (cmd_ret)
+        {
+            _append_cmd_hist_item(_create_cmd_hist_item(cmd, NULL));
+        }
+
+        _print_cmd_hist();
+
+        return (cmd_ret) ? FALSE : TRUE;
     }
     else
     {
-        cmd_ret = ftpgc_write_reply(csock, 530, "Please login with USER and PASS.");
+        return FALSE;
     }
-
-    _append_cmd_hist_item(_create_cmd_hist_item(cmd, NULL));
-
-    _print_cmd_hist();
-
-    return (cmd_ret) ? FALSE : TRUE;
 }
 
 s32 ftpgc_parse_cmd(const char *cmd, char **ret)
@@ -58,10 +73,10 @@ s32 ftpgc_parse_cmd(const char *cmd, char **ret)
 
     if (cmd_len > 0)
     {
-        _cmd_reformat(cmd);
+        _cmd_copy(cmd);
         if (_cmd_valid(Single))
         {
-            *ret = &(cmd_tmp[0]);
+            *ret = &(cmd_cur[0]);
             printf("valid\n");
 
             return FTPGC_CMD_SINGLE;
@@ -69,10 +84,14 @@ s32 ftpgc_parse_cmd(const char *cmd, char **ret)
         else if (_cmd_valid(Param))
         {
             // TODO
-            return FTPGC_CMD_MULTI;
+
+            return FTPGC_CMD_PARAM;
         }
     }
 
+    printf("invalid\n");
+
+    cmd_type = Invalid;
     return FTPGC_CMD_INVALID;
 }
 
@@ -86,18 +105,24 @@ s32 ftpgc_write_reply(s32 csock, u32 code, const char *msg)
 
 void _append_cmd_hist_item(struct ftpgc_cmd_hist_item *item)
 {
-    for (cmd_i = 0; cmd_i < FTPGC_CMD_HIST_LEN; cmd_i++)
+    s32 i = 0;
+
+    for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
     {
-        if (ftpgc_cmd_hist[cmd_i] == NULL)
+        if (ftpgc_cmd_hist[i] == NULL)
         {
-            ftpgc_cmd_hist[cmd_i] = item;
+            ftpgc_cmd_hist[i] = item;
             return;
         }
     }
 
     _clean_cmd_hist_item(ftpgc_cmd_hist[0]);
 
-    for (cmd_i = 1; cmd_i < FTPGC_CMD_HIST_LEN; cmd_i++) { ftpgc_cmd_hist[cmd_i] = ftpgc_cmd_hist[cmd_i - 1]; }
+    printf("clear #%d\n", i);
+
+    for (i = 1; i < FTPGC_CMD_HIST_LEN; i++) { ftpgc_cmd_hist[i - 1] = ftpgc_cmd_hist[i]; }
+
+    ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN - 1] = item;
 
     return;
 }
@@ -113,12 +138,15 @@ void _clean_cmd_hist_item(struct ftpgc_cmd_hist_item *item)
 
 void _clear_cmd_hist(void)
 {
-    for (cmd_i = 0; cmd_i < FTPGC_CMD_HIST_LEN; cmd_i++)
+    s32 i = 0;
+
+    for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
     {
-        if (ftpgc_cmd_hist[cmd_i] != NULL)
+        if (ftpgc_cmd_hist[i] != NULL)
         {
-            _clean_cmd_hist_item(ftpgc_cmd_hist[cmd_i]);
-            ftpgc_cmd_hist[cmd_i] = NULL;
+            printf("clear\n");
+            _clean_cmd_hist_item(ftpgc_cmd_hist[i]);
+            ftpgc_cmd_hist[i] = NULL;
         }
     }
 }
@@ -130,7 +158,20 @@ void _clear_reply_buffer(void)
 
 void _cmd_clean()
 {
-    memset(&cmd_tmp, 0, 5);
+    memset(&cmd_cur, 0, 6);
+}
+
+void _cmd_copy(const char *cmd)
+{
+    s32 i = 0;
+
+    printf("%d\n", (cmd_len < 5) ? cmd_len : 5);
+    for (i = 0; i < ((cmd_len < 5) ? cmd_len : 5); i++) { cmd_cur[i] = toupper(cmd[i]); }
+
+    if (cmd_cur[4] == '\r')
+    {
+        cmd_cur[4] = '\0';
+    }
 }
 
 void _cmd_length(const char *cmd)
@@ -145,10 +186,17 @@ void _cmd_length(const char *cmd)
 
     cmd_pos = strstr(cmd, "\r");
 
-    if (cmd_pos)
+    if (cmd_pos != NULL)
     {
         cmd_len = cmd_pos - cmd;
     }
+    else
+    {
+        cmd_len = -1;
+        return;
+    }
+
+    printf("len: %d\n", cmd_len);
 
     cmd_pos = strstr(cmd, " ");
 
@@ -161,9 +209,11 @@ void _cmd_length(const char *cmd)
 
 BOOL _cmd_needs_auth(const char *cmd)
 {
-    for (cmd_i = 0; cmd_i < sizeof(ftpgc_cmds_need_auth) / sizeof(ftpgc_cmds_need_auth[0]); cmd_i++)
+    s32 i = 0;
+
+    for (i = 0; i < sizeof(ftpgc_cmds_need_auth) / sizeof(ftpgc_cmds_need_auth[0]); i++)
     {
-        if (strncmp(ftpgc_cmds_need_auth[cmd_i], cmd_tmp, 4) == 0)
+        if (strncmp(ftpgc_cmds_need_auth[i], cmd_cur, 4) == 0)
         {
             return TRUE;
         }
@@ -172,19 +222,17 @@ BOOL _cmd_needs_auth(const char *cmd)
     return FALSE;
 }
 
-void _cmd_reformat(const char *cmd)
-{
-    for (cmd_i = 0; cmd_i < cmd_len; cmd_i++) { cmd_tmp[cmd_i] = toupper(cmd[cmd_i]); }
-}
-
 BOOL _cmd_valid(enum ftpgc_cmd_type type)
 {
+    s32 i = 0;
+
     if (type == Single)
     {
-        for (cmd_i = 0; cmd_i < sizeof(ftpgc_cmds_single) / sizeof(ftpgc_cmds_single[0]); cmd_i++)
+        for (i = 0; i < sizeof(ftpgc_cmds_single) / sizeof(ftpgc_cmds_single[0]); i++)
         {
-            if (strncmp(ftpgc_cmds_single[cmd_i], cmd_tmp, 4) == 0)
+            if (strncmp(ftpgc_cmds_single[i], cmd_cur, 5) == 0)
             {
+                cmd_type = Single;
                 return TRUE;
             }
         }
@@ -192,9 +240,11 @@ BOOL _cmd_valid(enum ftpgc_cmd_type type)
     else
     {
         // TODO
-        return TRUE;
+        cmd_type = Param;
+        return FALSE;
     }
 
+    cmd_type = Invalid;
     return FALSE;
 }
 
@@ -203,12 +253,18 @@ struct ftpgc_cmd_hist_item *_create_cmd_hist_item(const char *cmd, const char *p
     struct ftpgc_cmd_hist_item *item = calloc(1, sizeof(struct ftpgc_cmd_hist_item));
     strncpy(item->cmd, cmd, 4);
 
-    s32 len = strlen(params);
-    if (len)
+    if (params)
     {
-        s32 len_params = (len < FTPGC_CONTROL_REQ_LEN - 4) ? len : FTPGC_CONTROL_REQ_LEN - 4;
-        item->params   = calloc(len_params, sizeof(char));
-        strncpy(item->params, params, len_params);
+        s32 len = strlen(params);
+        if (len)
+        {
+            s32 len        = strlen(params);
+            s32 len_params = (len < FTPGC_CONTROL_REQ_LEN - 4) ? len : FTPGC_CONTROL_REQ_LEN - 4;
+
+            item->params = calloc(len_params + 1, sizeof(char));
+            memcpy(item->params, params, len_params * sizeof(char));
+            item->params[len_params] = '0';
+        }
     }
 
     return item;
@@ -216,14 +272,16 @@ struct ftpgc_cmd_hist_item *_create_cmd_hist_item(const char *cmd, const char *p
 
 void _print_cmd_hist(void)
 {
-    for (cmd_i = 0; cmd_i < FTPGC_CMD_HIST_LEN; cmd_i++)
-    {
-        if (ftpgc_cmd_hist[cmd_i] != NULL)
+    s32 i = 0;
 
+    for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
+    {
+        if (ftpgc_cmd_hist[i] != NULL)
         {
-            printf("cmd: %s, params: %s\n",
-                   ftpgc_cmd_hist[cmd_i]->cmd,
-                   (ftpgc_cmd_hist[cmd_i]->params != NULL) ? ftpgc_cmd_hist[cmd_i] : "");
+            printf("cmd #%d: %s, params: %s\n",
+                   i,
+                   ftpgc_cmd_hist[i]->cmd,
+                   (ftpgc_cmd_hist[i]->params != NULL) ? ftpgc_cmd_hist[i]->params : "");
         }
     }
 }

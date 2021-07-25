@@ -1,4 +1,4 @@
-# https://gist.github.com/paxbun/0793556cfec1a56970f5ef80e26a72b3
+# modified: https://gist.github.com/paxbun/0793556cfec1a56970f5ef80e26a72b3
 # Copyright (c) 2020-2021 Chanjung Kim (paxbun). All rights reserved.
 # Licensed under the MIT License.
 # See Clang 10 documentation for more information.
@@ -86,7 +86,7 @@ NamespaceIndentation: None
 
 PenaltyReturnTypeOnItsOwnLine: 80
 
-PointerAlignment: Right 
+PointerAlignment: Right
 
 ReflowComments: true
 
