@@ -14,7 +14,7 @@ const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
 
 struct sockaddr_in ctrl_client, ctrl_server;
 
-u32   ctrl_client_len = -1;
+u32   ctrl_client_len  = -1;
 char *ctrl_cmd;
 s32   ctrl_csock = -1, ctrl_sock = -1;
 BOOL  ctrl_execution_end = FALSE;
@@ -104,6 +104,8 @@ void *_ctrl_handle(void *ret_void_ptr)
     printf("Connecting port %d from %s\n", ctrl_client.sin_port, inet_ntoa(ctrl_client.sin_addr));
     ctrl_ret = net_send(ctrl_csock, ftpgc_welcome, strlen(ftpgc_welcome), 0);
 
+    ftpgc_cmd_reset_hist();
+
     while (true)
     {
         ctrl_execution_end = FALSE;
@@ -123,19 +125,20 @@ void *_ctrl_handle(void *ret_void_ptr)
             return NULL;
         }
 
-        ctrl_ret_cmd = ftpgc_parse_cmd(ctrl_req_buffer, &ctrl_cmd);
+        ctrl_ret_cmd = ftpgc_cmd_parse(ctrl_req_buffer, &ctrl_cmd);
+
         if (ctrl_ret_cmd == FTPGC_CMD_SINGLE)
         {
-            ctrl_execution_end = ftpgc_handle_single_cmd(ctrl_csock, ctrl_cmd);
+            ctrl_execution_end = ftpgc_cmd_handle_single(ctrl_csock, ctrl_cmd);
         }
         else if (ctrl_ret_cmd == FTPGC_CMD_PARAM)
         {
             // TODO
-            ctrl_ret = ftpgc_write_reply(ctrl_csock, 503, "Command not implemented yet.");
+            ctrl_ret = ftpgc_cmd_write_reply(ctrl_csock, 503, "Command not implemented yet.");
         }
         else
         {
-            ctrl_ret = ftpgc_write_reply(ctrl_csock, 502, "Command not implemented.");
+            ctrl_ret = ftpgc_cmd_write_reply(ctrl_csock, 502, "Command not implemented.");
         }
         if (!ctrl_ret)
         {
