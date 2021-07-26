@@ -10,19 +10,17 @@
 #include "ftpgc_const.h"
 #include "ftpgc_thread.h"
 
-const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
+const char *ftpgc_welcome = "welcome to " FTPGC_NAME ".";
 
 struct sockaddr_in ctrl_client, ctrl_server;
 
-u32   ctrl_client_len = -1;
-char *ctrl_cmd;
-s32   ctrl_csock = -1, ctrl_sock = -1;
-BOOL  ctrl_execution_end = FALSE;
-char  ctrl_req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
-s32   ctrl_ret        = -1;
-s32   ctrl_ret_cmd    = -1;
-s32   ctrl_ret_handle = 0;
-s32   ctrl_ret_thread = 0;
+u32  ctrl_client_len = -1;
+s32  ctrl_csock = -1, ctrl_sock = -1;
+char ctrl_req_buffer[FTPGC_CONTROL_REQ_LEN + 1];
+s32  ctrl_ret        = -1;
+s32  ctrl_ret_cmd    = -1;
+s32  ctrl_ret_handle = 0;
+s32  ctrl_ret_thread = 0;
 
 s32 ftpgc_create_ctrl_server()
 {
@@ -108,11 +106,10 @@ void *_ctrl_handle(void *ret_void_ptr)
         printf("DEBUG: Connecting port %d from %s\n", ctrl_client.sin_port, inet_ntoa(ctrl_client.sin_addr));
     }
 
-    ctrl_ret = net_send(ctrl_csock, ftpgc_welcome, strlen(ftpgc_welcome), 0);
+    ftpgc_cmd_write_reply(ctrl_csock, 220, ftpgc_welcome);
 
     while (true)
     {
-        ctrl_execution_end = FALSE;
         _clear_req_buffer();
 
         ctrl_ret = net_recv(ctrl_csock, ctrl_req_buffer, FTPGC_CONTROL_REQ_LEN, 0);
@@ -129,27 +126,22 @@ void *_ctrl_handle(void *ret_void_ptr)
             return NULL;
         }
 
-        ctrl_ret_cmd = ftpgc_cmd_parse(ctrl_req_buffer, &ctrl_cmd);
-
-        if (ctrl_ret_cmd == FTPGC_CMD_SINGLE)
+        if (ftpgc_cmd_parse(ctrl_req_buffer) != FTPGC_CMD_INVALID)
         {
-            ctrl_execution_end = ftpgc_cmd_handle_single(ctrl_csock, ctrl_cmd);
-        }
-        else if (ctrl_ret_cmd == FTPGC_CMD_PARAM)
-        {
-            // TODO
-            ctrl_ret = ftpgc_cmd_write_reply(ctrl_csock, 503, "Command not implemented yet.");
+            ctrl_ret = ftpgc_cmd_handle(ctrl_csock);
         }
         else
         {
             ctrl_ret = ftpgc_cmd_write_reply(ctrl_csock, 502, "Command not implemented.");
         }
+
         if (!ctrl_ret)
         {
             ctrl_ret_handle = FTPGC_DATA_THREAD_SEND_ERROR;
             return NULL;
         }
-        if (ctrl_execution_end)
+
+        if (ctrl_ret == FTPGC_EXECUTION_END)
         {
             ctrl_ret_handle = FTPGC_EXECUTION_END;
             _close_socket(TRUE);

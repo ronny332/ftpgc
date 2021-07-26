@@ -12,7 +12,14 @@ s32 ftpgc_init(void)
     init_network();
 
     if (bba_exists == 0 || net_initialized == 0)
+    {
         return FTPGC_NO_NETWORK;
+    }
+
+    if (FTPGC_DEBUG)
+    {
+        printf("DEBUG: "FTPGC_NAME" started\n");
+    }
 
     if (FTPGC_DEBUG)
     {

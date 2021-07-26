@@ -9,8 +9,8 @@
 #include "ftpgc_const.h"
 
 static const char *ftpgc_cmds_need_auth[] = { "CWD" };
-static const char *ftpgc_cmds_param[]     = { "USER", "PASS" };
-static const char *ftpgc_cmds_single[]    = { "NOOP", "SYST", "QUIT", "CWD" };
+static const char *ftpgc_cmds_param[]     = { "USER", "PASS", "CWD" };
+static const char *ftpgc_cmds_single[]    = { "NOOP", "SYST", "QUIT" };
 
 struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
 
@@ -23,63 +23,62 @@ s32   cmd_ret = 0;
 
 enum ftpgc_cmd_type cmd_type = Invalid;
 
-BOOL ftpgc_cmd_handle_single(s32 csock, const char *cmd)
+s32 ftpgc_cmd_handle(s32 csock)
 {
-    if (cmd_type == Single)
+    if (!_cmd_needs_auth(cmd_cmd))
     {
-        if (!_cmd_needs_auth(cmd))
+        switch (cmd_type)
         {
-            if (strncmp(cmd, "NOOP", 4) == 0)
+        case Param: cmd_ret = ftpgc_cmd_write_reply(csock, 202, "Command not implemented yet, come back later."); break;
+        case Single:
+            if (strncmp(cmd_cmd, "NOOP", 4) == 0)
             {
                 cmd_ret = ftpgc_cmd_write_reply(csock, 200, "Command okay.");
             }
-            else if (strncmp(cmd, "QUIT", 4) == 0)
+            else if (strncmp(cmd_cmd, "QUIT", 4) == 0)
             {
                 ftpgc_cmd_write_reply(csock, 221, "Goodbye.");
-                return TRUE;
+                return FTPGC_EXECUTION_END;
             }
-            else if (strncmp(cmd, "SYST", 4) == 0)
+            else if (strncmp(cmd_cmd, "SYST", 4) == 0)
             {
                 cmd_ret = ftpgc_cmd_write_reply(csock, 215, "UNIX Type: L8.");
             }
             else
             {
-                cmd_ret = ftpgc_cmd_write_reply(csock, 500, "Command not understood.");
+                if (FTPGC_DEBUG)
+                {
+                    printf("ERROR: should never been reached.\n");
+                }
+                cmd_ret = ftpgc_cmd_write_reply(csock, 502, "Command not understood.");
             }
+            break;
+        case Invalid:
+            cmd_ret = ftpgc_cmd_write_reply(csock, 500, "Command not understood.");
+            return FTPGC_EXECUTION_CONTINUE;
         }
-        else
-        {
-            ftpgc_cmd_write_reply(csock, 530, "Please login with USER and PASS.");
-            cmd_ret = -1;
-        }
-
-        if (cmd_ret)
-        {
-            _cmd_hist_add_item(_cmd_hist_create_item(cmd, NULL));
-        }
-
-        _cmd_hist_print();
-
-        return (cmd_ret) ? FALSE : TRUE;
     }
     else
     {
-        return FALSE;
+        cmd_ret = ftpgc_cmd_write_reply(csock, 530, "Please login with USER and PASS.");
     }
+
+    _cmd_hist_add_item(_cmd_hist_create_item());
+    _cmd_hist_print();
+
+    return (cmd_ret) ? FTPGC_EXECUTION_CONTINUE : FTPGC_EXECUTION_END;
 }
 
-s32 ftpgc_cmd_parse(const char *cmd, char **ret)
+s32 ftpgc_cmd_parse(const char *cmd)
 {
     _cmd_clean();
     _cmd_length(cmd);
 
     if (cmd_len > 0)
     {
-        _cmd_copy(cmd);
+        _cmd_split(cmd);
         if (_cmd_valid(Single))
         {
-            *ret = &(cmd_cmd[0]);
-
             if (FTPGC_DEBUG)
             {
                 printf("DEBUG: cmd valid for single handling\n");
@@ -128,50 +127,6 @@ void _cmd_clean()
     memset(&cmd_param, 0, FTPGC_CMD_PARAM_LEN);
 }
 
-void _cmd_copy(const char *cmd)
-{
-    s32 i = 0;
-
-    for (i = 0; i < ((cmd_len < 5) ? cmd_len : 5); i++)
-    {
-        cmd_cmd[i] = toupper(cmd[i]);
-
-        if (cmd_cmd[i] == '\r' || cmd_cmd[i] == '\n' || cmd_cmd[i] == ' ')
-        {
-            cmd_cmd[i] = '\0';
-        }
-    }
-
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: got cmd \"%s\"\n", cmd_cmd);
-    }
-
-    if (cmd_len > 5)
-    {
-        const char *param = cmd + 5;
-        strncpy(cmd_param, param, FTPGC_CMD_PARAM_LEN);
-
-        s32 param_len = strlen(cmd_param);
-        if (cmd_param[param_len - 2] == '\r')
-        {
-            cmd_param[param_len - 2] = '\0';
-        }
-
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: got param \"%s\"\n", cmd_param);
-        }
-    }
-    else
-    {
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: got no param\n");
-        }
-    }
-}
-
 void _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item)
 {
     s32 i = 0;
@@ -199,23 +154,17 @@ void _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item)
     return;
 }
 
-struct ftpgc_cmd_hist_item *_cmd_hist_create_item(const char *cmd, const char *params)
+struct ftpgc_cmd_hist_item *_cmd_hist_create_item(void)
 {
     struct ftpgc_cmd_hist_item *item = calloc(1, sizeof(struct ftpgc_cmd_hist_item));
-    strncpy(item->cmd, cmd, 4);
+    memcpy(item->cmd, cmd_cmd, FTPGC_CMD_CMD_LEN * sizeof(char));
 
-    if (params)
+    s32 len = strlen(cmd_param);
+    if (len)
     {
-        s32 len = strlen(params);
-        if (len)
-        {
-            s32 len        = strlen(params);
-            s32 len_params = (len < FTPGC_CONTROL_REQ_LEN - 4) ? len : FTPGC_CONTROL_REQ_LEN - 4;
-
-            item->params = calloc(len_params + 1, sizeof(char));
-            memcpy(item->params, params, len_params * sizeof(char));
-            item->params[len_params] = '0';
-        }
+        item->params = calloc(len + 1, sizeof(char));
+        memcpy(item->params, cmd_param, len * sizeof(char));
+        item->params[len] = '\0';
     }
 
     return item;
@@ -322,6 +271,52 @@ void _cmd_reset_hist(void)
 void _cmd_reset_reply_buffer(void)
 {
     memset(&cmd_reply_buffer, 0, FTPGC_CONTROL_REPLY_LEN + 1);
+}
+
+void _cmd_split(const char *cmd)
+{
+    s32 i = 0;
+
+    for (i = 0; i < ((cmd_len < 5) ? cmd_len : 5); i++)
+    {
+        cmd_cmd[i] = toupper(cmd[i]);
+
+        if (cmd_cmd[i] == '\r' || cmd_cmd[i] == '\n' || cmd_cmd[i] == ' ')
+        {
+            cmd_cmd[i] = '\0';
+        }
+    }
+
+    if (FTPGC_DEBUG)
+    {
+        printf("DEBUG: got cmd \"%s\"\n", cmd_cmd);
+    }
+
+    s32 pos = strstr(cmd, " ") - cmd;
+
+    if (pos == 3 || pos == 4)
+    {
+        const char *param = cmd + pos + 1;
+        strncpy(cmd_param, param, FTPGC_CMD_PARAM_LEN - 1);
+
+        s32 param_len = strlen(cmd_param);
+        if (cmd_param[param_len - 2] == '\r')
+        {
+            cmd_param[param_len - 2] = '\0';
+        }
+
+        if (FTPGC_DEBUG)
+        {
+            printf("DEBUG: got param \"%s\"\n", cmd_param);
+        }
+    }
+    else
+    {
+        if (FTPGC_DEBUG)
+        {
+            printf("DEBUG: got no param\n");
+        }
+    }
 }
 
 BOOL _cmd_valid(enum ftpgc_cmd_type type)

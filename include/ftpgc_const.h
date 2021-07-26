@@ -3,6 +3,8 @@
 
 static const int FTPGC_DEBUG = 1;
 
+#define FTPGC_NAME "GCFTP"
+
 #define FTPCG_PORT_CONTROL      21
 #define FTPGC_PORT_DATA         20
 #define FTPGC_CONTROL_REPLY_LEN 1024
@@ -31,11 +33,12 @@ static const int FTPGC_DEBUG = 1;
 #define FTPGC_DATA_THREAD_RECV_ERROR      -18
 #define FTPGC_DATA_THREAD_SEND_ERROR      -19
 
-#define FTPGC_SUCCESS       1
-#define FTPGC_VALID         1
-#define FTPGC_EXECUTION_END 2
-#define FTPGC_CMD_SINGLE    3
-#define FTPGC_CMD_PARAM     4
+#define FTPGC_SUCCESS            1
+#define FTPGC_VALID              1
+#define FTPGC_EXECUTION_END      2
+#define FTPGC_EXECUTION_CONTINUE 3
+#define FTPGC_CMD_PARAM          4
+#define FTPGC_CMD_SINGLE         5
 
 #define FTPGC_VAL_USER "test"
 #define FTPGC_VAL_PASS "1234"
