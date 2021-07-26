@@ -1,11 +1,15 @@
 #ifndef __FTPGC_CONST_
 #define __FTPGC_CONST_
 
+static const int FTPGC_DEBUG = 1;
+
 #define FTPCG_PORT_CONTROL      21
 #define FTPGC_PORT_DATA         20
 #define FTPGC_CONTROL_REPLY_LEN 1024
 #define FTPGC_CONTROL_REQ_LEN   1024
+#define FTPGC_CMD_CMD_LEN       6
 #define FTPGC_CMD_HIST_LEN      7
+#define FTPGC_CMD_PARAM_LEN     1018
 
 #define FTPGC_NO_NETWORK                  -1
 #define FTPGC_NO_SOCKET                   -2

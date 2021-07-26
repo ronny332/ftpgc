@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ftpgc_const.h"
+
 #include "exi.h"
 
 /* Network Globals */
@@ -19,7 +21,11 @@ void init_network(void *args)
 
     int res    = 0;
     bba_exists = TRUE; // exi_bba_exists();
-    printf("OK\n");
+
+    if (FTPGC_DEBUG)
+    {
+        printf("DEBUG: FTPGC started\n");
+    }
 
     if (bba_exists && !net_initialized)
     {

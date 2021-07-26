@@ -14,13 +14,28 @@ s32 ftpgc_init(void)
     if (bba_exists == 0 || net_initialized == 0)
         return FTPGC_NO_NETWORK;
 
-    printf("ip: %s\n", bba_ip);
+    if (FTPGC_DEBUG)
+    {
+        printf("DEBUG: got IP address %s\n", bba_ip);
+    }
+
     // while (true)
     for (int i = 0; i < 3; i++)
     {
-        printf("new control server...\n");
-        printf("server start: %d\n", ftpgc_create_ctrl_server());
-        printf("server ended: %d\n", ftpgc_join_ctrl_server());
+        if (FTPGC_DEBUG)
+        {
+            printf("DEBUG: starting new control server...\n");
+        }
+        s32 ctrl_server_ret = ftpgc_create_ctrl_server();
+        if (FTPGC_DEBUG)
+        {
+            printf("DEBUG: server start %d\n", ctrl_server_ret);
+        }
+        s32 crtl_server_join_ret = ftpgc_join_ctrl_server();
+        if (FTPGC_DEBUG)
+        {
+            printf("DEBUG: server ended %d\n", crtl_server_join_ret);
+        }
     }
 
     return FTPGC_SUCCESS;

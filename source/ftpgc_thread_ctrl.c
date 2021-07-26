@@ -14,7 +14,7 @@ const char *ftpgc_welcome = "220 welcome to GCFTP\r\n";
 
 struct sockaddr_in ctrl_client, ctrl_server;
 
-u32   ctrl_client_len  = -1;
+u32   ctrl_client_len = -1;
 char *ctrl_cmd;
 s32   ctrl_csock = -1, ctrl_sock = -1;
 BOOL  ctrl_execution_end = FALSE;
@@ -53,6 +53,8 @@ void _close_socket(BOOL shutdown)
         net_close(ctrl_csock);
         ctrl_csock = -1;
     }
+
+    ftpgc_cmd_reset_hist();
 }
 
 void *_ctrl_handle(void *ret_void_ptr)
@@ -101,10 +103,12 @@ void *_ctrl_handle(void *ret_void_ptr)
         return NULL;
     }
 
-    printf("Connecting port %d from %s\n", ctrl_client.sin_port, inet_ntoa(ctrl_client.sin_addr));
-    ctrl_ret = net_send(ctrl_csock, ftpgc_welcome, strlen(ftpgc_welcome), 0);
+    if (FTPGC_DEBUG)
+    {
+        printf("DEBUG: Connecting port %d from %s\n", ctrl_client.sin_port, inet_ntoa(ctrl_client.sin_addr));
+    }
 
-    ftpgc_cmd_reset_hist();
+    ctrl_ret = net_send(ctrl_csock, ftpgc_welcome, strlen(ftpgc_welcome), 0);
 
     while (true)
     {

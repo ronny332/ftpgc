@@ -21,17 +21,16 @@ s32  ftpgc_cmd_parse(const char *cmd, char **ret);
 void ftpgc_cmd_reset_hist(void);
 s32  ftpgc_cmd_write_reply(s32 csock, u32 code, const char *msg);
 
-void _cmd_clean();
-void _cmd_copy(const char *cmd);
-void _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item);
-void _cmd_hist_del_item(struct ftpgc_cmd_hist_item *item);
-void _cmd_length(const char *cmd);
-BOOL _cmd_needs_auth(const char *cmd);
-void _cmd_print_hist(void);
-void _cmd_reset_hist(void);
-void _cmd_reset_reply_buffer(void);
-BOOL _cmd_valid(enum ftpgc_cmd_type type);
-
-struct ftpgc_cmd_hist_item *_create_cmd_hist_item(const char *cmd, const char *params);
+void                        _cmd_clean();
+void                        _cmd_copy(const char *cmd);
+void                        _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item);
+struct ftpgc_cmd_hist_item *_cmd_hist_create_item(const char *cmd, const char *params);
+void                        _cmd_hist_del_item(struct ftpgc_cmd_hist_item *item);
+void                        _cmd_hist_print(void);
+void                        _cmd_length(const char *cmd);
+BOOL                        _cmd_needs_auth(const char *cmd);
+void                        _cmd_reset_hist(void);
+void                        _cmd_reset_reply_buffer(void);
+BOOL                        _cmd_valid(enum ftpgc_cmd_type type);
 
 #endif
