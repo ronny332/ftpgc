@@ -89,6 +89,11 @@ s32 ftpgc_cmd_parse(const char *cmd, char **ret)
         }
         else if (_cmd_valid(Param))
         {
+            if (FTPGC_DEBUG)
+            {
+                printf("DEBUG: cmd valid for param handling, but not ready yet\n");
+            }
+
             // TODO
 
             return FTPGC_CMD_PARAM;
@@ -127,16 +132,19 @@ void _cmd_copy(const char *cmd)
 {
     s32 i = 0;
 
-    for (i = 0; i < ((cmd_len < 5) ? cmd_len : 5); i++) { cmd_cmd[i] = toupper(cmd[i]); }
-
-    if (cmd_cmd[4] == '\r')
+    for (i = 0; i < ((cmd_len < 5) ? cmd_len : 5); i++)
     {
-        cmd_cmd[4] = '\0';
+        cmd_cmd[i] = toupper(cmd[i]);
+
+        if (cmd_cmd[i] == '\r' || cmd_cmd[i] == '\n' || cmd_cmd[i] == ' ')
+        {
+            cmd_cmd[i] = '\0';
+        }
     }
 
     if (FTPGC_DEBUG)
     {
-        printf("DEBUG: got cmd %s\n", cmd_cmd);
+        printf("DEBUG: got cmd \"%s\"\n", cmd_cmd);
     }
 
     if (cmd_len > 5)
@@ -152,7 +160,7 @@ void _cmd_copy(const char *cmd)
 
         if (FTPGC_DEBUG)
         {
-            printf("DEBUG: got param %s\n", cmd_param);
+            printf("DEBUG: got param \"%s\"\n", cmd_param);
         }
     }
     else
@@ -296,7 +304,8 @@ void _cmd_reset_hist(void)
 {
     s32 i = 0;
 
-    if (FTPGC_DEBUG) {
+    if (FTPGC_DEBUG)
+    {
         printf("DEBUG: cmd hist reset\n");
     }
 
