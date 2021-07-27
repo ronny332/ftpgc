@@ -40,6 +40,6 @@ static const int FTPGC_DEBUG = 1;
 #define FTPGC_CMD_PARAM          4
 #define FTPGC_CMD_SINGLE         5
 
-#define FTPGC_VAL_USER "test"
-#define FTPGC_VAL_PASS "1234"
+#define FTPGC_AUTH_USER "test"
+#define FTPGC_AUTH_PASS "1234"
 #endif

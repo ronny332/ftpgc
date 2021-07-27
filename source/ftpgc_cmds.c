@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ftpgc_auth.h"
 #include "ftpgc_const.h"
 
 static const char *ftpgc_cmds_need_auth[] = { "CWD" };
@@ -50,7 +51,8 @@ s32 ftpgc_cmd_handle(s32 csock)
                 {
                     printf("ERROR: should never been reached.\n");
                 }
-                cmd_ret = ftpgc_cmd_write_reply(csock, 502, "Command not understood.");
+                ftpgc_cmd_write_reply(csock, 421, "Internal Error.");
+                return FTPGC_EXECUTION_END;
             }
             break;
         case Invalid:
