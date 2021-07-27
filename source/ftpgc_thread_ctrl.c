@@ -145,6 +145,9 @@ void *_ctrl_handle(void *ret_void_ptr)
         {
             ctrl_ret_handle = FTPGC_EXECUTION_END;
             _close_socket(TRUE);
+            ftpgc_auth_set_USER("test");
+            ftpgc_auth_set_PASS("1234");
+            ftpgc_auth_login();
             ftpgc_auth_logout();
             return NULL;
         }
