@@ -8,6 +8,8 @@
 #define FTPGC_AUTH_USER_LEN sizeof(FTPGC_AUTH_USER) - 1
 #define FTPGC_AUTH_PASS_LEN sizeof(FTPGC_AUTH_PASS) - 1
 
+static BOOL ftpgc_authenticated = FALSE;
+
 char ftpgc_USER[FTPGC_AUTH_USER_LEN + 1] = { 0 };
 char ftpgc_PASS[FTPGC_AUTH_PASS_LEN + 1] = { 0 };
 
@@ -15,10 +17,26 @@ BOOL ftpgc_auth_login(void)
 {
     _ftpgc_authenticate();
 
-    if (FTPGC_DEBUG) {
-        printf("DEBUG: authentication was%s successful.\n", ((!ftpgc_authenticated) ? "" : " NOT"));
+    if (FTPGC_DEBUG)
+    {
+        printf("DEBUG: authentication was%s successful.\n", ((ftpgc_authenticated) ? "" : " NOT"));
     }
 
+    return ftpgc_authenticated;
+}
+
+s32 ftpgc_auth_len_USER(void)
+{
+    return strlen(ftpgc_USER);
+}
+
+s32 ftpgc_auth_len_PASS(void)
+{
+    return strlen(ftpgc_PASS);
+}
+
+BOOL ftpgc_auth_logged_in(void)
+{
     return ftpgc_authenticated;
 }
 
@@ -27,6 +45,8 @@ void ftpgc_auth_logout(void)
     ftpgc_authenticated = FALSE;
     memset(ftpgc_USER, 0, FTPGC_AUTH_USER_LEN + 1);
     memset(ftpgc_PASS, 0, FTPGC_AUTH_PASS_LEN + 1);
+
+    // TODO cancel all active data connections
 
     if (FTPGC_DEBUG)
     {
@@ -76,8 +96,8 @@ void ftpgc_auth_set_PASS(const char *pass)
 
 void _ftpgc_authenticate(void)
 {
-    if (strncmp(FTPGC_AUTH_USER, ftpgc_USER, FTPGC_AUTH_USER_LEN)
-        && strncmp(FTPGC_AUTH_PASS, ftpgc_PASS, FTPGC_AUTH_PASS_LEN))
+    if (strncmp(FTPGC_AUTH_USER, ftpgc_USER, FTPGC_AUTH_USER_LEN) == 0
+        && strncmp(FTPGC_AUTH_PASS, ftpgc_PASS, FTPGC_AUTH_PASS_LEN) == 0)
     {
         ftpgc_authenticated = TRUE;
         return;

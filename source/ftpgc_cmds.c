@@ -15,22 +15,37 @@ static const char *ftpgc_cmds_single[]    = { "NOOP", "SYST", "QUIT" };
 
 struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
 
-char  cmd_cmd[FTPGC_CMD_CMD_LEN];
-s32   cmd_len = 0;
-char  cmd_param[FTPGC_CMD_PARAM_LEN];
-char *cmd_pos = NULL;
-char  cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1];
-s32   cmd_ret = 0;
+char  cmd_cmd[FTPGC_CMD_CMD_LEN]                    = { 0 };
+s32   cmd_len                                       = 0;
+char  cmd_param[FTPGC_CMD_PARAM_LEN]                = { 0 };
+char *cmd_pos                                       = NULL;
+char  cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1] = { 0 };
+s32   cmd_ret                                       = 0;
+s32   csock                                         = 0;
 
 enum ftpgc_cmd_type cmd_type = Invalid;
 
-s32 ftpgc_cmd_handle(s32 csock)
+s32 ftpgc_cmd_handle(s32 cs)
 {
+    csock = cs;
     if (!_cmd_needs_auth(cmd_cmd))
     {
         switch (cmd_type)
         {
-        case Param: cmd_ret = ftpgc_cmd_write_reply(csock, 202, "Command not implemented yet, come back later."); break;
+        case Param:
+            if (strncmp(cmd_cmd, "USER", 4) == 0)
+            {
+                cmd_ret = _cmd_USER();
+            }
+            else if (strncmp(cmd_cmd, "PASS", 4) == 0)
+            {
+                cmd_ret = _cmd_PASS();
+            }
+            else
+            {
+                cmd_ret = ftpgc_cmd_write_reply(csock, 202, "Command not implemented yet, come back later.");
+            }
+            break;
         case Single:
             if (strncmp(cmd_cmd, "NOOP", 4) == 0)
             {
@@ -83,7 +98,7 @@ s32 ftpgc_cmd_parse(const char *cmd)
         {
             if (FTPGC_DEBUG)
             {
-                printf("DEBUG: cmd valid for single handling\n");
+                printf("DEBUG: cmd valid for single handling.\n");
             }
 
             return FTPGC_CMD_SINGLE;
@@ -92,10 +107,8 @@ s32 ftpgc_cmd_parse(const char *cmd)
         {
             if (FTPGC_DEBUG)
             {
-                printf("DEBUG: cmd valid for param handling, but not ready yet\n");
+                printf("DEBUG: cmd valid for param handling.\n");
             }
-
-            // TODO
 
             return FTPGC_CMD_PARAM;
         }
@@ -349,4 +362,56 @@ BOOL _cmd_valid(enum ftpgc_cmd_type type)
     }
     cmd_type = Invalid;
     return FALSE;
+}
+
+s32 _cmd_USER(void)
+{
+    if (strlen(cmd_param))
+    {
+        if (ftpgc_auth_logged_in())
+        {
+            ftpgc_auth_logout();
+        }
+        ftpgc_auth_set_USER(cmd_param);
+        return ftpgc_cmd_write_reply(csock, 331, "Password required, use PASS now.");
+    }
+    else
+    {
+        return ftpgc_cmd_write_reply(csock, 500, "USER requires a parameter.");
+    }
+}
+
+s32 _cmd_PASS(void)
+{
+    if (ftpgc_auth_logged_in())
+    {
+        return ftpgc_cmd_write_reply(csock, 503, "Already logged in.");
+    }
+    else if (strlen(cmd_param))
+    {
+        if (ftpgc_auth_len_USER)
+        {
+            ftpgc_auth_set_PASS(cmd_param);
+
+            if (ftpgc_auth_len_PASS())
+            {
+                ftpgc_auth_login();
+
+                if (ftpgc_auth_logged_in())
+                {
+                    return ftpgc_cmd_write_reply(csock, 230, "User logged in.");
+                }
+            }
+            ftpgc_auth_logout();
+            return ftpgc_cmd_write_reply(csock, 530, "Login incorrect.");
+        }
+        else
+        {
+            return ftpgc_cmd_write_reply(csock, 503, "PASS requires USER set first.");
+        }
+    }
+    else
+    {
+        return ftpgc_cmd_write_reply(csock, 500, "PASS requires a parameter.");
+    }
 }

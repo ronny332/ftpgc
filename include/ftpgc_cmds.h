@@ -16,7 +16,7 @@ struct ftpgc_cmd_hist_item
     char *params;
 };
 
-s32 ftpgc_cmd_handle(s32 csock);
+s32  ftpgc_cmd_handle(s32 cs);
 s32  ftpgc_cmd_parse(const char *cmd);
 void ftpgc_cmd_reset_hist(void);
 s32  ftpgc_cmd_write_reply(s32 csock, u32 code, const char *msg);
@@ -32,5 +32,8 @@ void                        _cmd_reset_hist(void);
 void                        _cmd_reset_reply_buffer(void);
 void                        _cmd_split(const char *cmd);
 BOOL                        _cmd_valid(enum ftpgc_cmd_type type);
+
+s32 _cmd_USER(void);
+s32 _cmd_PASS(void);
 
 #endif
