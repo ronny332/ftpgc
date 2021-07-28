@@ -11,7 +11,7 @@ struct ftpgc_cmd_hist_item
     char *params;
 };
 
-s32  ftpgc_cmd_handle(s32 cs);
+s32  ftpgc_cmd_handle(s32 s);
 s32  ftpgc_cmd_parse(const char *cmd);
 #ifdef FTPGC_DEBUG
 void ftpgc_cmd_reset_hist(void);
@@ -35,6 +35,7 @@ void _cmd_split(const char *cmd);
 s32 _cmd_CWD(void);
 s32 _cmd_NOOP(void);
 s32 _cmd_PASS(void);
+s32 _cmd_PORT(void);
 s32 _cmd_QUIT(void);
 s32 _cmd_SYST(void);
 s32 _cmd_USER(void);

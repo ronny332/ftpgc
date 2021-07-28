@@ -9,12 +9,12 @@
 #include "ftpgc_auth.h"
 #include "ftpgc_const.h"
 
-static const char *ftpgc_cmds_need_auth[] = { "CWD" };
-static const char *ftpgc_cmds[]           = { "CWD", "NOOP", "PASS", "QUIT", "SYST", "USER" };
+static const char *ftpgc_cmds_need_auth[] = { "CWD", "PORT" };
+static const char *ftpgc_cmds[]           = { "CWD", "NOOP", "PASS", "PORT", "QUIT", "SYST", "USER" };
 
 typedef s32 (*ftpgc_cmd_handle_t)();
 static const ftpgc_cmd_handle_t ftpgc_cmds_handles[]
-    = { NULL, &_cmd_CWD, &_cmd_NOOP, &_cmd_PASS, &_cmd_QUIT, &_cmd_SYST, &_cmd_USER };
+    = { NULL, &_cmd_CWD, &_cmd_NOOP, &_cmd_PASS, &_cmd_PORT, &_cmd_QUIT, &_cmd_SYST, &_cmd_USER };
 
 char  cmd_cmd[FTPGC_CMD_CMD_LEN]                    = { 0 };
 s32   cmd_len                                       = 0;
@@ -29,9 +29,9 @@ s32   csock                                         = 0;
 struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
 #endif
 
-s32 ftpgc_cmd_handle(s32 cs)
+s32 ftpgc_cmd_handle(s32 s)
 {
-    csock = cs;
+    csock = s;
 
 #ifdef FTPGC_DEBUG
     _cmd_hist_add_item(_cmd_hist_create_item());
@@ -67,7 +67,7 @@ s32 ftpgc_cmd_parse(const char *cmd)
         {
 
 #ifdef FTPGC_DEBUG
-            printf("DEBUG: cmd valid for single handling.\n");
+            printf("DEBUG: cmd valid.\n");
 #endif
             return FTPGC_CMD_VALID;
         }
@@ -350,6 +350,51 @@ s32 _cmd_PASS(void)
     {
         return __cmd_needs_parameter("PASS");
     }
+}
+
+s32 _cmd_PORT(void)
+{
+    struct
+    {
+        s32 h1;
+        s32 h2;
+        s32 h3;
+        s32 h4;
+        s32 p1;
+        s32 p2;
+        s32 ip;
+        s32 port;
+    } PORT_values = { 0 };
+
+    s32 ret = sscanf(cmd_param,
+                     "%d,%d,%d,%d,%d,%d",
+                     &PORT_values.h1,
+                     &PORT_values.h2,
+                     &PORT_values.h3,
+                     &PORT_values.h4,
+                     &PORT_values.p1,
+                     &PORT_values.p2);
+
+    if (ret == 6)
+    {
+        PORT_values.ip   = ((0xffffffff & (PORT_values.h1 << 24)) | (0xffffff & (PORT_values.h2 << 16))
+                          | (0xffff & (PORT_values.h3 << 8)) | (0xff & PORT_values.h4));
+        PORT_values.port = (0xffff & (PORT_values.p1 << 8)) | (0xff & PORT_values.p2);
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: PORT_values %d, %d.%d.%d.%d:%d.%d\n",
+               ret,
+               PORT_values.h1,
+               PORT_values.h2,
+               PORT_values.h3,
+               PORT_values.h4,
+               PORT_values.p1,
+               PORT_values.p2);
+
+        printf("DEBUG: ip:port %x:%d\n", PORT_values.ip, PORT_values.port);
+#endif
+    }
+
+    return __cmd_not_understood();
 }
 
 s32 _cmd_QUIT(void)
