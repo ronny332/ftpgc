@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "ftpgc_auth.h"
 #include "ftpgc_const.h"
@@ -339,6 +340,7 @@ s32 _cmd_PASS(void)
                 }
             }
             ftpgc_auth_logout();
+            sleep(3);
             return ftpgc_cmd_write_reply(csock, 530, "Login incorrect.");
         }
         else
@@ -354,6 +356,11 @@ s32 _cmd_PASS(void)
 
 s32 _cmd_PORT(void)
 {
+    if (!ftpgc_auth_logged_in())
+    {
+        return __cmd_not_logged_in();
+    }
+
     struct
     {
         u32 h1;
@@ -392,9 +399,12 @@ s32 _cmd_PORT(void)
 
         printf("DEBUG: ip:port %x:%d\n", PORT_values.ip, PORT_values.port);
 #endif
+        return __cmd_not_understood();
     }
-
-    return __cmd_not_understood();
+    else
+    {
+        return __cmd_syntax_error();
+    }
 }
 
 s32 _cmd_QUIT(void)
@@ -432,12 +442,17 @@ s32 __cmd_needs_parameter(char *name)
     return ftpgc_cmd_write_reply(csock, 500, out_tmp);
 }
 
-s32 __cmd_not_logged_in()
+s32 __cmd_not_logged_in(void)
 {
     return ftpgc_cmd_write_reply(csock, 530, "Please login with USER and PASS.");
 }
 
-s32 __cmd_not_understood()
+s32 __cmd_not_understood(void)
 {
     return ftpgc_cmd_write_reply(csock, 500, "Not understood.");
+}
+
+s32 __cmd_syntax_error(void)
+{
+    return ftpgc_cmd_write_reply(csock, 501, "Syntax error in parameter or arguments.");
 }

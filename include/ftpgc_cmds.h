@@ -11,12 +11,12 @@ struct ftpgc_cmd_hist_item
     char *params;
 };
 
-s32  ftpgc_cmd_handle(s32 s);
-s32  ftpgc_cmd_parse(const char *cmd);
+s32 ftpgc_cmd_handle(s32 s);
+s32 ftpgc_cmd_parse(const char *cmd);
 #ifdef FTPGC_DEBUG
 void ftpgc_cmd_reset_hist(void);
 #endif
-s32  ftpgc_cmd_write_reply(s32 csock, u32 code, const char *msg);
+s32 ftpgc_cmd_write_reply(s32 csock, u32 code, const char *msg);
 
 void _cmd_clean();
 BOOL _cmd_detect();
@@ -43,5 +43,6 @@ s32 _cmd_USER(void);
 s32 __cmd_needs_parameter(char *name);
 s32 __cmd_not_logged_in();
 s32 __cmd_not_understood();
+s32 __cmd_syntax_error(void);
 
 #endif
