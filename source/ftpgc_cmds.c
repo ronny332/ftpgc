@@ -356,18 +356,18 @@ s32 _cmd_PORT(void)
 {
     struct
     {
-        s32 h1;
-        s32 h2;
-        s32 h3;
-        s32 h4;
-        s32 p1;
-        s32 p2;
-        s32 ip;
-        s32 port;
+        u32 h1;
+        u32 h2;
+        u32 h3;
+        u32 h4;
+        u32 p1;
+        u32 p2;
+        u32 ip;
+        u16 port;
     } PORT_values = { 0 };
 
     s32 ret = sscanf(cmd_param,
-                     "%d,%d,%d,%d,%d,%d",
+                     "%u,%u,%u,%u,%u,%u",
                      &PORT_values.h1,
                      &PORT_values.h2,
                      &PORT_values.h3,
@@ -379,9 +379,9 @@ s32 _cmd_PORT(void)
     {
         PORT_values.ip   = ((0xffffffff & (PORT_values.h1 << 24)) | (0xffffff & (PORT_values.h2 << 16))
                           | (0xffff & (PORT_values.h3 << 8)) | (0xff & PORT_values.h4));
-        PORT_values.port = (0xffff & (PORT_values.p1 << 8)) | (0xff & PORT_values.p2);
+        PORT_values.port = (u16)((0xffff & (PORT_values.p1 << 8)) | (0xff & PORT_values.p2));
 #ifdef FTPGC_DEBUG
-        printf("DEBUG: PORT_values %d, %d.%d.%d.%d:%d.%d\n",
+        printf("DEBUG: raw PORT_values %u, %u.%u.%u.%u:%u.%u\n",
                ret,
                PORT_values.h1,
                PORT_values.h2,
