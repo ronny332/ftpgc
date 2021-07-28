@@ -52,7 +52,9 @@ void _close_socket(BOOL shutdown)
         ctrl_csock = -1;
     }
 
+#ifdef FTPGC_DEBUG
     ftpgc_cmd_reset_hist();
+#endif
 }
 
 void *_ctrl_handle(void *ret_void_ptr)

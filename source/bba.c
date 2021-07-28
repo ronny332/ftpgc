@@ -6,9 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ftpgc_const.h"
-
 #include "exi.h"
+#include "ftpgc_const.h"
 
 /* Network Globals */
 int  net_initialized = 0;
@@ -19,8 +18,12 @@ char bba_ip[16];
 void init_network(void *args)
 {
 
-    int res    = 0;
-    bba_exists = TRUE; // exi_bba_exists();
+    int res = 0;
+#ifdef FTPGC_DEBUG
+    bba_exists = TRUE;
+#else
+    bba_exists = exi_bba_exists();
+#endif
 
     if (bba_exists && !net_initialized)
     {

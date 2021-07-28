@@ -78,10 +78,12 @@ s32 ftpgc_cmd_parse(const char *cmd)
     return FTPGC_CMD_INVALID;
 }
 
+#ifdef FTPGC_DEBUG
 void ftpgc_cmd_reset_hist(void)
 {
-    _cmd_reset_hist();
+    _cmd_hist_reset();
 }
+#endif
 
 s32 ftpgc_cmd_write_reply(s32 csock, u32 code, const char *msg)
 {
@@ -113,6 +115,7 @@ BOOL _cmd_detect()
     return FALSE;
 }
 
+#ifdef FTPGC_DEBUG
 void _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item)
 {
     s32 i = 0;
@@ -128,9 +131,8 @@ void _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item)
 
     _cmd_hist_del_item(ftpgc_cmd_hist[0]);
 
-#ifdef FTPGC_DEBUG
     printf("DEBUG: clearing hist iten #%d\n", i);
-#endif
+
     for (i = 1; i < FTPGC_CMD_HIST_LEN; i++) { ftpgc_cmd_hist[i - 1] = ftpgc_cmd_hist[i]; }
 
     ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN - 1] = item;
@@ -165,7 +167,6 @@ void _cmd_hist_del_item(struct ftpgc_cmd_hist_item *item)
 
 void _cmd_hist_print(void)
 {
-#ifdef FTPGC_DEBUG
     s32 i = 0;
 
     for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
@@ -178,8 +179,24 @@ void _cmd_hist_print(void)
                    (ftpgc_cmd_hist[i]->params != NULL) ? ftpgc_cmd_hist[i]->params : "");
         }
     }
-#endif
 }
+
+void _cmd_hist_reset(void)
+{
+    s32 i = 0;
+
+    printf("DEBUG: cmd hist reset\n");
+
+    for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
+    {
+        if (ftpgc_cmd_hist[i] != NULL)
+        {
+            _cmd_hist_del_item(ftpgc_cmd_hist[i]);
+            ftpgc_cmd_hist[i] = NULL;
+        }
+    }
+}
+#endif
 
 void _cmd_length(const char *cmd)
 {
@@ -229,24 +246,6 @@ BOOL _cmd_needs_auth(const char *cmd)
     }
 
     return FALSE;
-}
-
-void _cmd_reset_hist(void)
-{
-    s32 i = 0;
-
-#ifdef FTPGC_DEBUG
-    printf("DEBUG: cmd hist reset\n");
-#endif
-
-    for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
-    {
-        if (ftpgc_cmd_hist[i] != NULL)
-        {
-            _cmd_hist_del_item(ftpgc_cmd_hist[i]);
-            ftpgc_cmd_hist[i] = NULL;
-        }
-    }
 }
 
 void _cmd_reset_reply_buffer(void)
