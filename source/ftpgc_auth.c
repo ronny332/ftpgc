@@ -67,6 +67,7 @@ void ftpgc_auth_set_USER(const char *user)
         return;
     }
     memset(ftpgc_USER, 0, FTPGC_AUTH_USER_LEN + 1);
+    ftpgc_USER[0] = ' ';
 
     if (FTPGC_DEBUG)
     {

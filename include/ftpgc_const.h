@@ -32,13 +32,12 @@ static const int FTPGC_DEBUG = 1;
 #define FTPGC_CTRL_THREAD_SEND_ERROR      -17
 #define FTPGC_DATA_THREAD_RECV_ERROR      -18
 #define FTPGC_DATA_THREAD_SEND_ERROR      -19
+#define FTPGC_EXECUTION_END               -20
 
 #define FTPGC_SUCCESS            1
 #define FTPGC_VALID              1
-#define FTPGC_EXECUTION_END      2
-#define FTPGC_EXECUTION_CONTINUE 3
-#define FTPGC_CMD_PARAM          4
-#define FTPGC_CMD_SINGLE         5
+#define FTPGC_EXECUTION_CONTINUE 2
+#define FTPGC_CMD_VALID          3
 
 #define FTPGC_AUTH_USER "test"
 #define FTPGC_AUTH_PASS "1234"

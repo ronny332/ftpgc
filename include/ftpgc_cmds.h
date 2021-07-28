@@ -3,13 +3,6 @@
 
 #include <gctypes.h>
 
-enum ftpgc_cmd_type
-{
-    Invalid,
-    Single,
-    Param
-};
-
 struct ftpgc_cmd_hist_item
 {
     char  cmd[5];
@@ -31,9 +24,17 @@ BOOL                        _cmd_needs_auth(const char *cmd);
 void                        _cmd_reset_hist(void);
 void                        _cmd_reset_reply_buffer(void);
 void                        _cmd_split(const char *cmd);
-BOOL                        _cmd_valid(enum ftpgc_cmd_type type);
+BOOL                        _cmd_valid();
 
-s32 _cmd_USER(void);
+s32 _cmd_CWD(void);
+s32 _cmd_NOOP(void);
 s32 _cmd_PASS(void);
+s32 _cmd_QUIT(void);
+s32 _cmd_SYST(void);
+s32 _cmd_USER(void);
+
+s32 __cmd_needs_parameter(char *name);
+s32 __cmd_not_logged_in();
+s32 __cmd_not_understood();
 
 #endif
