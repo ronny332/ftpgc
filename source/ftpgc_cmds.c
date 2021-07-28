@@ -26,6 +26,18 @@ char  cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1] = { 0 };
 s32   cmd_ret                                       = 0;
 s32   csock                                         = 0;
 
+struct
+{
+    u32 h1;
+    u32 h2;
+    u32 h3;
+    u32 h4;
+    u32 p1;
+    u32 p2;
+    u32 ip;
+    u16 port;
+} cmd_port_details = { 0 };
+
 #ifdef FTPGC_DEBUG
 struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
 #endif
@@ -54,6 +66,12 @@ s32 ftpgc_cmd_handle(s32 s)
     }
 
     return (cmd_ret != FTPGC_EXECUTION_END) ? FTPGC_EXECUTION_CONTINUE : FTPGC_EXECUTION_END;
+}
+
+void ftpgc_cmd_new(void)
+{
+    _cmd_clean();
+    _cmd_clean_port_details();
 }
 
 s32 ftpgc_cmd_parse(const char *cmd)
@@ -88,7 +106,7 @@ void ftpgc_cmd_reset_hist(void)
 
 s32 ftpgc_cmd_write_reply(s32 csock, u32 code, const char *msg)
 {
-    _cmd_reset_reply_buffer();
+    _cmd_clean_reply_buffer();
     sprintf(cmd_reply_buffer, "%u %s\r\n", code, msg);
 
     return net_send(csock, cmd_reply_buffer, strlen(cmd_reply_buffer), 0);
@@ -98,6 +116,16 @@ void _cmd_clean()
 {
     memset(&cmd_cmd, 0, FTPGC_CMD_CMD_LEN);
     memset(&cmd_param, 0, FTPGC_CMD_PARAM_LEN);
+}
+
+void _cmd_clean_port_details(void)
+{
+    memset(&cmd_port_details, 0, sizeof(cmd_port_details));
+}
+
+void _cmd_clean_reply_buffer(void)
+{
+    memset(&cmd_reply_buffer, 0, FTPGC_CONTROL_REPLY_LEN + 1);
 }
 
 BOOL _cmd_detect()
@@ -249,11 +277,6 @@ BOOL _cmd_needs_auth(const char *cmd)
     return FALSE;
 }
 
-void _cmd_reset_reply_buffer(void)
-{
-    memset(&cmd_reply_buffer, 0, FTPGC_CONTROL_REPLY_LEN + 1);
-}
-
 void _cmd_split(const char *cmd)
 {
     s32 i = 0;
@@ -361,48 +384,37 @@ s32 _cmd_PORT(void)
         return __cmd_not_logged_in();
     }
 
-    struct
-    {
-        u32 h1;
-        u32 h2;
-        u32 h3;
-        u32 h4;
-        u32 p1;
-        u32 p2;
-        u32 ip;
-        u16 port;
-    } PORT_values = { 0 };
-
     s32 ret = sscanf(cmd_param,
                      "%u,%u,%u,%u,%u,%u",
-                     &PORT_values.h1,
-                     &PORT_values.h2,
-                     &PORT_values.h3,
-                     &PORT_values.h4,
-                     &PORT_values.p1,
-                     &PORT_values.p2);
+                     &cmd_port_details.h1,
+                     &cmd_port_details.h2,
+                     &cmd_port_details.h3,
+                     &cmd_port_details.h4,
+                     &cmd_port_details.p1,
+                     &cmd_port_details.p2);
 
     if (ret == 6)
     {
-        PORT_values.ip   = ((0xffffffff & (PORT_values.h1 << 24)) | (0xffffff & (PORT_values.h2 << 16))
-                          | (0xffff & (PORT_values.h3 << 8)) | (0xff & PORT_values.h4));
-        PORT_values.port = (u16)((0xffff & (PORT_values.p1 << 8)) | (0xff & PORT_values.p2));
+        cmd_port_details.ip   = ((0xffffffff & (cmd_port_details.h1 << 24)) | (0xffffff & (cmd_port_details.h2 << 16))
+                       | (0xffff & (cmd_port_details.h3 << 8)) | (0xff & cmd_port_details.h4));
+        cmd_port_details.port = (u16)((0xffff & (cmd_port_details.p1 << 8)) | (0xff & cmd_port_details.p2));
 #ifdef FTPGC_DEBUG
-        printf("DEBUG: raw PORT_values %u, %u.%u.%u.%u:%u.%u\n",
+        printf("DEBUG: raw cmd_port_details %u, %u.%u.%u.%u:%u.%u\n",
                ret,
-               PORT_values.h1,
-               PORT_values.h2,
-               PORT_values.h3,
-               PORT_values.h4,
-               PORT_values.p1,
-               PORT_values.p2);
+               cmd_port_details.h1,
+               cmd_port_details.h2,
+               cmd_port_details.h3,
+               cmd_port_details.h4,
+               cmd_port_details.p1,
+               cmd_port_details.p2);
 
-        printf("DEBUG: ip:port %x:%d\n", PORT_values.ip, PORT_values.port);
+        printf("DEBUG: ip:port %x:%d\n", cmd_port_details.ip, cmd_port_details.port);
 #endif
         return __cmd_not_understood();
     }
     else
     {
+        _cmd_clean_port_details();
         return __cmd_syntax_error();
     }
 }
