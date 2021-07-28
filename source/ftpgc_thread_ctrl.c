@@ -101,10 +101,9 @@ void *_ctrl_handle(void *ret_void_ptr)
         return NULL;
     }
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: Connecting port %d from %s\n", ctrl_client.sin_port, inet_ntoa(ctrl_client.sin_addr));
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: Connecting port %d from %s\n", ctrl_client.sin_port, inet_ntoa(ctrl_client.sin_addr));
+#endif
 
     ftpgc_cmd_write_reply(ctrl_csock, 220, ftpgc_welcome);
 

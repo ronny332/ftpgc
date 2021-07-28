@@ -1,7 +1,7 @@
 #ifndef __FTPGC_CONST_
 #define __FTPGC_CONST_
 
-static const int FTPGC_DEBUG = 1;
+#define FTPGC_DEBUG
 
 #define FTPGC_NAME "GCFTP"
 

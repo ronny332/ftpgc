@@ -16,33 +16,25 @@ s32 ftpgc_init(void)
         return FTPGC_NO_NETWORK;
     }
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: "FTPGC_NAME" started\n");
-    }
-
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: got IP address %s\n", bba_ip);
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: " FTPGC_NAME " started\n");
+    printf("DEBUG: got IP address %s\n", bba_ip);
+#endif
 
     // while (true)
     for (int i = 0; i < 3; i++)
     {
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: starting new control server...\n");
-        }
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: starting new control server...\n");
+#endif
         s32 ctrl_server_ret = ftpgc_create_ctrl_server();
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: server start %d\n", ctrl_server_ret);
-        }
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: server start %d\n", ctrl_server_ret);
+#endif
         s32 crtl_server_join_ret = ftpgc_join_ctrl_server();
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: server ended %d\n", crtl_server_join_ret);
-        }
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: server ended %d\n", crtl_server_join_ret);
+#endif
     }
 
     return FTPGC_SUCCESS;

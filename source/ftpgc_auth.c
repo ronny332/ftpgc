@@ -17,10 +17,9 @@ BOOL ftpgc_auth_login(void)
 {
     _ftpgc_authenticate();
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: authentication was%s successful.\n", ((ftpgc_authenticated) ? "" : " NOT"));
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: authentication was%s successful.\n", ((ftpgc_authenticated) ? "" : " NOT"));
+#endif
 
     return ftpgc_authenticated;
 }
@@ -48,10 +47,9 @@ void ftpgc_auth_logout(void)
 
     // TODO cancel all active data connections
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: USER and PASS set to 0.\n");
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: USER and PASS set to 0.\n");
+#endif
 }
 
 void ftpgc_auth_set_USER(const char *user)
@@ -60,19 +58,17 @@ void ftpgc_auth_set_USER(const char *user)
     {
         strncpy(ftpgc_USER, user, FTPGC_AUTH_USER_LEN);
 
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: set USER to \"%s\"\n", ftpgc_USER);
-        }
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: set USER to \"%s\"\n", ftpgc_USER);
+#endif
         return;
     }
     memset(ftpgc_USER, 0, FTPGC_AUTH_USER_LEN + 1);
     ftpgc_USER[0] = ' ';
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: USER \"%s\" was invalid.\n", user);
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: USER \"%s\" was invalid.\n", user);
+#endif
 }
 
 void ftpgc_auth_set_PASS(const char *pass)
@@ -81,18 +77,16 @@ void ftpgc_auth_set_PASS(const char *pass)
     {
         strncpy(ftpgc_PASS, pass, FTPGC_AUTH_PASS_LEN);
 
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: set PASS to \"%s\"\n", ftpgc_PASS);
-        }
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: set PASS to \"%s\"\n", ftpgc_PASS);
+#endif
         return;
     }
     memset(ftpgc_PASS, 0, FTPGC_AUTH_PASS_LEN + 1);
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: PASS \"%s\" was invalid.\n", pass);
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: PASS \"%s\" was invalid.\n", pass);
+#endif
 }
 
 void _ftpgc_authenticate(void)

@@ -16,8 +16,6 @@ typedef s32 (*ftpgc_cmd_handle_t)();
 static const ftpgc_cmd_handle_t ftpgc_cmds_handles[]
     = { NULL, &_cmd_CWD, &_cmd_NOOP, &_cmd_PASS, &_cmd_QUIT, &_cmd_SYST, &_cmd_USER };
 
-struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
-
 char  cmd_cmd[FTPGC_CMD_CMD_LEN]                    = { 0 };
 s32   cmd_len                                       = 0;
 s32   cmd_no                                        = 0;
@@ -27,26 +25,27 @@ char  cmd_reply_buffer[FTPGC_CONTROL_REPLY_LEN + 1] = { 0 };
 s32   cmd_ret                                       = 0;
 s32   csock                                         = 0;
 
+#ifdef FTPGC_DEBUG
+struct ftpgc_cmd_hist_item *ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN] = { NULL };
+#endif
+
 s32 ftpgc_cmd_handle(s32 cs)
 {
     csock = cs;
 
-    if (FTPGC_DEBUG)
-    {
-        _cmd_hist_add_item(_cmd_hist_create_item());
-        _cmd_hist_print();
+#ifdef FTPGC_DEBUG
+    _cmd_hist_add_item(_cmd_hist_create_item());
+    _cmd_hist_print();
 
-        printf("DEBUG: got cmd no: %d\n", cmd_no);
-    }
+    printf("DEBUG: got cmd no: %d\n", cmd_no);
+#endif
 
     if (cmd_no)
     {
         cmd_ret = ftpgc_cmds_handles[cmd_no]();
-
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: got cmd ret: %d\n", cmd_ret);
-        }
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: got cmd ret: %d\n", cmd_ret);
+#endif
     }
     else
     {
@@ -64,21 +63,18 @@ s32 ftpgc_cmd_parse(const char *cmd)
     if (cmd_len > 0)
     {
         _cmd_split(cmd);
-        if (_cmd_valid())
+        if (_cmd_detect())
         {
-            if (FTPGC_DEBUG)
-            {
-                printf("DEBUG: cmd valid for single handling.\n");
-            }
 
+#ifdef FTPGC_DEBUG
+            printf("DEBUG: cmd valid for single handling.\n");
+#endif
             return FTPGC_CMD_VALID;
         }
     }
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: cmd invalid\n");
-    }
-
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: cmd invalid\n");
+#endif
     return FTPGC_CMD_INVALID;
 }
 
@@ -101,6 +97,22 @@ void _cmd_clean()
     memset(&cmd_param, 0, FTPGC_CMD_PARAM_LEN);
 }
 
+BOOL _cmd_detect()
+{
+    s32 i = 0;
+
+    for (i = 0; i < sizeof(ftpgc_cmds) / sizeof(ftpgc_cmds[0]); i++)
+    {
+        if (strncmp(ftpgc_cmds[i], cmd_cmd, 5) == 0)
+        {
+            cmd_no = i + 1;
+            return TRUE;
+        }
+    }
+    cmd_no = FTPGC_CMD_INVALID;
+    return FALSE;
+}
+
 void _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item)
 {
     s32 i = 0;
@@ -116,11 +128,9 @@ void _cmd_hist_add_item(struct ftpgc_cmd_hist_item *item)
 
     _cmd_hist_del_item(ftpgc_cmd_hist[0]);
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: clearing hist iten #%d\n", i);
-    }
-
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: clearing hist iten #%d\n", i);
+#endif
     for (i = 1; i < FTPGC_CMD_HIST_LEN; i++) { ftpgc_cmd_hist[i - 1] = ftpgc_cmd_hist[i]; }
 
     ftpgc_cmd_hist[FTPGC_CMD_HIST_LEN - 1] = item;
@@ -155,21 +165,20 @@ void _cmd_hist_del_item(struct ftpgc_cmd_hist_item *item)
 
 void _cmd_hist_print(void)
 {
-    if (FTPGC_DEBUG)
-    {
-        s32 i = 0;
+#ifdef FTPGC_DEBUG
+    s32 i = 0;
 
-        for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
+    for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
+    {
+        if (ftpgc_cmd_hist[i] != NULL)
         {
-            if (ftpgc_cmd_hist[i] != NULL)
-            {
-                printf("DEBUG: cmd hist item #%d: %s, params: %s\n",
-                       i,
-                       ftpgc_cmd_hist[i]->cmd,
-                       (ftpgc_cmd_hist[i]->params != NULL) ? ftpgc_cmd_hist[i]->params : "");
-            }
+            printf("DEBUG: cmd hist item #%d: %s, params: %s\n",
+                   i,
+                   ftpgc_cmd_hist[i]->cmd,
+                   (ftpgc_cmd_hist[i]->params != NULL) ? ftpgc_cmd_hist[i]->params : "");
         }
     }
+#endif
 }
 
 void _cmd_length(const char *cmd)
@@ -194,10 +203,9 @@ void _cmd_length(const char *cmd)
         return;
     }
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: cmd length %d\n", cmd_len);
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: cmd length %d\n", cmd_len);
+#endif
 
     cmd_pos = strstr(cmd, " ");
 
@@ -227,10 +235,9 @@ void _cmd_reset_hist(void)
 {
     s32 i = 0;
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: cmd hist reset\n");
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: cmd hist reset\n");
+#endif
 
     for (i = 0; i < FTPGC_CMD_HIST_LEN; i++)
     {
@@ -261,10 +268,9 @@ void _cmd_split(const char *cmd)
         }
     }
 
-    if (FTPGC_DEBUG)
-    {
-        printf("DEBUG: got cmd \"%s\"\n", cmd_cmd);
-    }
+#ifdef FTPGC_DEBUG
+    printf("DEBUG: got cmd \"%s\"\n", cmd_cmd);
+#endif
 
     s32 pos = strstr(cmd, " ") - cmd;
 
@@ -279,34 +285,16 @@ void _cmd_split(const char *cmd)
             cmd_param[param_len - 2] = '\0';
         }
 
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: got param \"%s\"\n", cmd_param);
-        }
+#ifdef FTPGC_DEBUG
+        printf("DEBUG: got param \"%s\"\n", cmd_param);
+#endif
     }
+#ifdef FTPGC_DEBUG
     else
     {
-        if (FTPGC_DEBUG)
-        {
-            printf("DEBUG: got no param\n");
-        }
+        printf("DEBUG: got no param\n");
     }
-}
-
-BOOL _cmd_valid()
-{
-    s32 i = 0;
-
-    for (i = 0; i < sizeof(ftpgc_cmds) / sizeof(ftpgc_cmds[0]); i++)
-    {
-        if (strncmp(ftpgc_cmds[i], cmd_cmd, 5) == 0)
-        {
-            cmd_no = i + 1;
-            return TRUE;
-        }
-    }
-    cmd_no = FTPGC_CMD_INVALID;
-    return FALSE;
+#endif
 }
 
 s32 _cmd_CWD(void)
